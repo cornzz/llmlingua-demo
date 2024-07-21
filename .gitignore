@@ -3,3 +3,4 @@ flagged/
 __pycache__/
 .env
 .DS_Store
+gradio_cached_examples/
