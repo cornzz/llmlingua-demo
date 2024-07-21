@@ -99,11 +99,11 @@ with gr.Blocks() as demo:
     with gr.Row():
         with gr.Column():
             response_a_full = gr.Textbox(label="Response A", visible=False)
-            response_a = gr.Textbox(label="LLM Response A", lines=10, max_lines=10)
+            response_a = gr.Textbox(label="LLM Response A", lines=10, max_lines=10, interactive=False)
             button_a = gr.Button("A is better", interactive=False)
         with gr.Column():
             response_b_full = gr.Textbox(label="Response B", visible=False)
-            response_b = gr.Textbox(label="LLM Response B", lines=10, max_lines=10)
+            response_b = gr.Textbox(label="LLM Response B", lines=10, max_lines=10, interactive=False)
             button_b = gr.Button("B is better", interactive=False)
 
     examples = gr.Examples(
