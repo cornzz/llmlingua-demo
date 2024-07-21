@@ -82,7 +82,7 @@ with gr.Blocks() as demo:
     )
     prompt = gr.Textbox(lines=8, label="Prompt")
     rate = gr.Slider(0.1, 1, 0.5, step=0.05, label="Rate")
-    target_model = gr.Dropdown(LLM_MODELS, value=LLM_MODELS[0], label="Target LLM Model")
+    target_model = gr.Radio(LLM_MODELS, value=LLM_MODELS[0], label="Target LLM Model")
     with gr.Row():
         clear = gr.Button("Clear", variant="secondary")
         submit = gr.Button("Submit", variant="primary", interactive=False)
