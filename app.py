@@ -1,13 +1,15 @@
-from llmlingua import PromptCompressor
-import gradio as gr
-import torch
-import pandas as pd
 import json
-import requests
 import os
-from dotenv import load_dotenv
+import time
 
-from utils import create_metrics_df, activate_button
+import gradio as gr
+import pandas as pd
+import requests
+import torch
+from dotenv import load_dotenv
+from llmlingua import PromptCompressor
+
+from utils import activate_button, create_metrics_df
 
 load_dotenv()
 
