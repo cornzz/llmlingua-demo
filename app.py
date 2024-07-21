@@ -85,7 +85,7 @@ with gr.Blocks() as demo:
     target_model = gr.Dropdown(LLM_MODELS, value=LLM_MODELS[0], label="Target LLM Model")
     with gr.Row():
         clear = gr.Button("Clear", variant="secondary")
-        submit = gr.Button("Submit", variant="primary")
+        submit = gr.Button("Submit", variant="primary", interactive=False)
 
     compressed_prompt = gr.Textbox(label="Compressed Prompt", visible=False)
     metrics = gr.Dataframe(
@@ -120,6 +120,7 @@ with gr.Blocks() as demo:
         inputs=[prompt, rate],
     )
 
+    prompt.change(activate_button, inputs=prompt, outputs=submit)
     submit.click(
         run,
         inputs=[prompt, rate, target_model],
