@@ -17,3 +17,6 @@ def create_metrics_df(result=None):
 
 def activate_button(value):
     return gr.Button(interactive=bool(value))
+
+def update_label(content: str, textbox: gr.Textbox):
+    return gr.Textbox(label=textbox.label.split(" (")[0] + f" ({len(content.split())} words)")

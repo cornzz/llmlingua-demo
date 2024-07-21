@@ -10,7 +10,7 @@ import torch
 from dotenv import load_dotenv
 from llmlingua import PromptCompressor
 
-from utils import activate_button, create_metrics_df
+from utils import activate_button, create_metrics_df, update_label
 
 load_dotenv()
 
@@ -90,13 +90,13 @@ with gr.Blocks() as demo:
         show_label=False,
         interactive=False,
     )
-    with gr.Row():
+    with gr.Row(variant="compact"):
         with gr.Column():
-            response_a = gr.Textbox(label="LLM Response A", lines=10, max_lines=10, interactive=False)
+            response_a = gr.Textbox(label="LLM Response A", lines=10, max_lines=10, autoscroll=False, interactive=False)
             response_a_obj = gr.Textbox(label="Response A", visible=False)
             button_a = gr.Button("A is better", interactive=False)
         with gr.Column():
-            response_b = gr.Textbox(label="LLM Response B", lines=10, max_lines=10, interactive=False)
+            response_b = gr.Textbox(label="LLM Response B", lines=10, max_lines=10, autoscroll=False, interactive=False)
             response_b_obj = gr.Textbox(label="Response B", visible=False)
             button_b = gr.Button("B is better", interactive=False)
 
@@ -119,6 +119,9 @@ with gr.Blocks() as demo:
             rate,
         ],
     )
+
+    response_a.change(lambda x: update_label(x, response_a), inputs=response_a, outputs=response_a)
+    response_b.change(lambda x: update_label(x, response_b), inputs=response_b, outputs=response_b)
 
     def flag(flag_value: str, *args):
         flagging_callback.flag(*args, flag_value)
