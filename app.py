@@ -1,6 +1,7 @@
 import json
 import os
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 import gradio as gr
 import pandas as pd
@@ -32,9 +33,10 @@ def call_llm_api(prompt: str, model: str):
     }
     response = requests.post(LLM_ENDPOINT, headers=headers, data=json.dumps(data))
     if response.status_code == 200:
-        return response.json()
+        response_obj = response.json()
+        return response_obj["choices"][0]["message"]["content"], response_obj
     else:
-        return response.text
+        return response.text, f"Error for model {model}: {response.status_code} - {response.text}"
 
 
 def compress_prompt(prompt: str, rate: float):
@@ -44,17 +46,21 @@ def compress_prompt(prompt: str, rate: float):
 
 
 def run(prompt: str, rate: float, target_model: str):
-    compressed_prompt, metrics = compress_prompt(prompt, rate)
-    response_compressed = call_llm_api(compressed_prompt, target_model)
-    response_original = call_llm_api(prompt, target_model)
+    with ThreadPoolExecutor() as executor:
+        start = time.time()
+        future_response_original = executor.submit(call_llm_api, prompt, target_model)
+        compressed_prompt, metrics = compress_prompt(prompt, rate)
+        res_compressed, res_compressed_obj = call_llm_api(compressed_prompt, target_model)
+        res_original, res_original_obj = future_response_original.result()
+        print(f"Processing time: {time.time() - start:.2f}s")
 
     return (
         compressed_prompt,
         metrics,
-        response_compressed,
-        response_compressed["choices"][0]["message"]["content"],
-        response_original,
-        response_original["choices"][0]["message"]["content"],
+        res_compressed,
+        res_compressed_obj,
+        res_original,
+        res_original_obj,
     )
 
 
@@ -86,19 +92,19 @@ with gr.Blocks() as demo:
     )
     with gr.Row():
         with gr.Column():
-            response_a_full = gr.Textbox(label="Response A", visible=False)
             response_a = gr.Textbox(label="LLM Response A", lines=10, max_lines=10, interactive=False)
+            response_a_obj = gr.Textbox(label="Response A", visible=False)
             button_a = gr.Button("A is better", interactive=False)
         with gr.Column():
-            response_b_full = gr.Textbox(label="Response B", visible=False)
             response_b = gr.Textbox(label="LLM Response B", lines=10, max_lines=10, interactive=False)
+            response_b_obj = gr.Textbox(label="Response B", visible=False)
             button_b = gr.Button("B is better", interactive=False)
 
     prompt.change(activate_button, inputs=prompt, outputs=submit)
     submit.click(
         run,
         inputs=[prompt, rate, target_model],
-        outputs=[compressed_prompt, metrics, response_a_full, response_a, response_b_full, response_b],
+        outputs=[compressed_prompt, metrics, response_a, response_a_obj, response_b, response_b_obj],
     )
     clear.click(
         lambda: [create_metrics_df()] + [None] * 6 + [0.5],
@@ -106,9 +112,9 @@ with gr.Blocks() as demo:
             metrics,
             prompt,
             compressed_prompt,
-            response_a_full,
+            response_a_obj,
             response_a,
-            response_b_full,
+            response_b_obj,
             response_b,
             rate,
         ],
@@ -118,7 +124,7 @@ with gr.Blocks() as demo:
         flagging_callback.flag(*args, flag_value)
         return [activate_button(False)] * 2
 
-    FLAG_COMPONENTS = [prompt, compressed_prompt, rate, metrics, response_a_full, response_b_full]
+    FLAG_COMPONENTS = [prompt, compressed_prompt, rate, metrics, response_a_obj, response_b_obj]
     response_a.change(activate_button, inputs=response_a, outputs=button_a)
     response_b.change(activate_button, inputs=response_b, outputs=button_b)
     flagging_callback.setup(FLAG_COMPONENTS, "flagged")
