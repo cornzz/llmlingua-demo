@@ -2,6 +2,7 @@ import json
 import os
 import time
 from concurrent.futures import ThreadPoolExecutor
+from random import shuffle
 
 import gradio as gr
 import pandas as pd
@@ -10,7 +11,7 @@ import torch
 from dotenv import load_dotenv
 from llmlingua import PromptCompressor
 
-from utils import activate_button, create_metrics_df, update_label
+from utils import activate_button, create_metrics_df, flatten, update_label
 
 load_dotenv()
 
@@ -24,7 +25,7 @@ llm_lingua = PromptCompressor(
 )
 
 
-def call_llm_api(prompt: str, model: str):
+def call_llm_api(prompt: str, model: str, compressed: bool = False):
     headers = {"Content-Type": "application/json", "Authorization": "Bearer no-key"}
     data = {
         "model": model,
@@ -34,9 +35,9 @@ def call_llm_api(prompt: str, model: str):
     response = requests.post(LLM_ENDPOINT, headers=headers, data=json.dumps(data))
     if response.status_code == 200:
         response_obj = response.json()
-        return response_obj["choices"][0]["message"]["content"], response_obj
+        return response_obj["choices"][0]["message"]["content"], {"compressed": compressed, **response_obj}
     else:
-        return response.text, f"Error for model {model}: {response.status_code} - {response.text}"
+        return response.text, {"compressed": compressed, "error": response.text, "status": response.status_code}
 
 
 def compress_prompt(prompt: str, rate: float):
@@ -48,20 +49,13 @@ def compress_prompt(prompt: str, rate: float):
 def run(prompt: str, rate: float, target_model: str):
     with ThreadPoolExecutor() as executor:
         start = time.time()
-        future_response_original = executor.submit(call_llm_api, prompt, target_model)
+        future_original = executor.submit(call_llm_api, prompt, target_model)
         compressed_prompt, metrics = compress_prompt(prompt, rate)
-        res_compressed, res_compressed_obj = call_llm_api(compressed_prompt, target_model)
-        res_original, res_original_obj = future_response_original.result()
+        responses = [call_llm_api(compressed_prompt, target_model, True), future_original.result()]
         print(f"Processing time: {time.time() - start:.2f}s")
 
-    return (
-        compressed_prompt,
-        metrics,
-        res_compressed,
-        res_compressed_obj,
-        res_original,
-        res_original_obj,
-    )
+    shuffle(responses)
+    return compressed_prompt, metrics, *flatten(responses)
 
 
 flagging_callback = gr.CSVLogger()
