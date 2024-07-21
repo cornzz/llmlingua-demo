@@ -7,6 +7,8 @@ import requests
 import os
 from dotenv import load_dotenv
 
+from utils import create_metrics_df, activate_button
+
 load_dotenv()
 
 LLM_ENDPOINT = os.getenv("LLM_ENDPOINT")
@@ -17,19 +19,6 @@ llm_lingua = PromptCompressor(
     use_llmlingua2=True,
     device_map="mps" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu",
 )
-
-
-def create_metrics_df(result=None):
-    return pd.DataFrame(
-        {
-            "Original / Compressed Tokens": (
-                [f'{result["origin_tokens"]} / {result["compressed_tokens"]}'] if result else [""]
-            ),
-            "Ratio": [result["ratio"]] if result else [""],
-            "Rate": [result["rate"]] if result else [""],
-            "Saving": [result["saving"]] if result else [""],
-        }
-    )
 
 
 def call_llm_api(prompt: str, model: str):
@@ -49,10 +38,7 @@ def call_llm_api(prompt: str, model: str):
 def compress_prompt(prompt: str, rate: float):
     result = llm_lingua.compress_prompt(prompt, rate=rate)
 
-    return (
-        result["compressed_prompt"],
-        create_metrics_df(result),
-    )
+    return result["compressed_prompt"], create_metrics_df(result)
 
 
 def run(prompt: str, rate: float, target_model: str):
@@ -106,20 +92,6 @@ with gr.Blocks() as demo:
             response_b = gr.Textbox(label="LLM Response B", lines=10, max_lines=10, interactive=False)
             button_b = gr.Button("B is better", interactive=False)
 
-    examples = gr.Examples(
-        examples=[
-            [
-                "John: So, um, I've been thinking about the project, you know, and I believe we need to, uh, make some changes. I mean, we want the project to succeed, right? So, like, I think we should consider maybe revising the timeline. Sarah: I totally agree, John. I mean, we have to be realistic, you know. The timeline is, like, too tight. You know what I mean? We should definitely extend it.",
-                0.3,
-            ],
-            [
-                "Item 15, report from City Manager Recommendation to adopt three resolutions. First, to join the Victory Pace program. Second, to join the California first program. And number three, consenting to to inclusion of certain properties within the jurisdiction in the California Hero program. It was emotion, motion, a second and public comment. CNN. Please cast your vote. Oh. Was your public comment? Yeah. Please come forward. I thank you, Mr. Mayor. Thank you. Members of the council. My name is Alex Mitchell. I represent the hero program. Just wanted to let you know that the hero program. Has been in California for the last three and a half years. We’re in. Over 20. We’re in 28 counties, and we’ve completed over 29,000 energy efficient projects to make homes. Greener and more energy efficient. And this includes anything. From solar to water. Efficiency. We’ve done. Almost.$550 million in home improvements.",
-                0.5,
-            ],
-        ],
-        inputs=[prompt, rate],
-    )
-
     prompt.change(activate_button, inputs=prompt, outputs=submit)
     submit.click(
         run,
@@ -144,9 +116,6 @@ with gr.Blocks() as demo:
         flagging_callback.flag(*args, flag_value)
         return [activate_button(False)] * 2
 
-    def activate_button(response):
-        return gr.Button(interactive=bool(response))
-
     FLAG_COMPONENTS = [prompt, compressed_prompt, rate, metrics, response_a_full, response_b_full]
     response_a.change(activate_button, inputs=response_a, outputs=button_a)
     response_b.change(activate_button, inputs=response_b, outputs=button_b)
@@ -156,6 +125,20 @@ with gr.Blocks() as demo:
     )
     button_b.click(
         lambda *args: flag("B", args), inputs=FLAG_COMPONENTS, outputs=[button_a, button_b], preprocess=False
+    )
+
+    examples = gr.Examples(
+        examples=[
+            [
+                "John: So, um, I've been thinking about the project, you know, and I believe we need to, uh, make some changes. I mean, we want the project to succeed, right? So, like, I think we should consider maybe revising the timeline. Sarah: I totally agree, John. I mean, we have to be realistic, you know. The timeline is, like, too tight. You know what I mean? We should definitely extend it.",
+                0.3,
+            ],
+            [
+                "Item 15, report from City Manager Recommendation to adopt three resolutions. First, to join the Victory Pace program. Second, to join the California first program. And number three, consenting to to inclusion of certain properties within the jurisdiction in the California Hero program. It was emotion, motion, a second and public comment. CNN. Please cast your vote. Oh. Was your public comment? Yeah. Please come forward. I thank you, Mr. Mayor. Thank you. Members of the council. My name is Alex Mitchell. I represent the hero program. Just wanted to let you know that the hero program. Has been in California for the last three and a half years. We’re in. Over 20. We’re in 28 counties, and we’ve completed over 29,000 energy efficient projects to make homes. Greener and more energy efficient. And this includes anything. From solar to water. Efficiency. We’ve done. Almost.$550 million in home improvements.",
+                0.5,
+            ],
+        ],
+        inputs=[prompt, rate],
     )
 
 
