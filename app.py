@@ -85,14 +85,15 @@ with gr.Blocks(js=JS) as demo:
         show_label=False,
         interactive=False,
     )
-    with gr.Row(variant="compact"):
-        with gr.Column():
+    with gr.Column(variant="panel"):
+        with gr.Row():
             response_a = gr.Textbox(label="LLM Response A", lines=10, max_lines=10, autoscroll=False, interactive=False)
             response_a_obj = gr.Textbox(label="Response A", visible=False)
-            button_a = gr.Button("A is better", interactive=False)
-        with gr.Column():
             response_b = gr.Textbox(label="LLM Response B", lines=10, max_lines=10, autoscroll=False, interactive=False)
             response_b_obj = gr.Textbox(label="Response B", visible=False)
+        with gr.Row():
+            button_a = gr.Button("A is better", interactive=False)
+            button_ab = gr.Button("Neither is better", interactive=False)
             button_b = gr.Button("B is better", interactive=False)
 
     prompt.change(activate_button, inputs=prompt, outputs=submit)
@@ -121,14 +122,16 @@ with gr.Blocks(js=JS) as demo:
     def flag(prompt, compr_prompt, rate, metrics, res_a_obj, res_b_obj, flag_button, request: gr.Request):
         args = [prompt, compr_prompt, rate, metrics, res_a_obj, res_b_obj]
         flagging_callback.flag(args, flag_option=flag_button[0], username=request.cookies["session"])
-        return [activate_button(False)] * 2
+        return [activate_button(False)] * 3
 
     FLAG_COMPONENTS = [prompt, compressed_prompt, rate, metrics, response_a_obj, response_b_obj]
     response_a.change(activate_button, inputs=response_a, outputs=button_a)
+    response_a.change(activate_button, inputs=response_a, outputs=button_ab)
     response_b.change(activate_button, inputs=response_b, outputs=button_b)
     flagging_callback.setup(FLAG_COMPONENTS, "flagged")
-    button_a.click(flag, inputs=FLAG_COMPONENTS + [button_a], outputs=[button_a, button_b], preprocess=False)
-    button_b.click(flag, inputs=FLAG_COMPONENTS + [button_b], outputs=[button_a, button_b], preprocess=False)
+    button_a.click(flag, inputs=FLAG_COMPONENTS + [button_a], outputs=[button_a, button_ab, button_b], preprocess=False)
+    button_ab.click(flag, inputs=FLAG_COMPONENTS + [button_ab], outputs=[button_a, button_ab, button_b], preprocess=False)
+    button_b.click(flag, inputs=FLAG_COMPONENTS + [button_b], outputs=[button_a, button_ab, button_b], preprocess=False)
 
     examples = gr.Examples(
         examples=[
