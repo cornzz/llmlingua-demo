@@ -17,6 +17,7 @@ load_dotenv()
 
 LLM_ENDPOINT = os.getenv("LLM_ENDPOINT")
 LLM_MODELS = ["meta-llama/Meta-Llama-3-70B-Instruct", "mistral-7b-q4", "CohereForAI/c4ai-command-r-plus"]
+JS = "() => { if (document.cookie.includes('session=')) return; const date = new Date(+new Date() + 10*365*24*60*60*1000); document.cookie = `session=${crypto.randomUUID()}; expires=${date.toUTCString()}; path=/`;}"
 
 llm_lingua = PromptCompressor(
     model_name="microsoft/llmlingua-2-xlm-roberta-large-meetingbank",
@@ -60,7 +61,7 @@ def run(prompt: str, rate: float, target_model: str):
 
 flagging_callback = gr.CSVLogger()
 
-with gr.Blocks() as demo:
+with gr.Blocks(js=JS) as demo:
     gr.Markdown(
         """
         # Prompt Compression A/B Test
@@ -117,20 +118,17 @@ with gr.Blocks() as demo:
     response_a.change(lambda x: update_label(x, response_a), inputs=response_a, outputs=response_a)
     response_b.change(lambda x: update_label(x, response_b), inputs=response_b, outputs=response_b)
 
-    def flag(flag_value: str, *args):
-        flagging_callback.flag(*args, flag_value)
+    def flag(prompt, compr_prompt, rate, metrics, res_a_obj, res_b_obj, flag_button, request: gr.Request):
+        args = [prompt, compr_prompt, rate, metrics, res_a_obj, res_b_obj]
+        flagging_callback.flag(args, flag_option=flag_button[0], username=request.cookies["session"])
         return [activate_button(False)] * 2
 
     FLAG_COMPONENTS = [prompt, compressed_prompt, rate, metrics, response_a_obj, response_b_obj]
     response_a.change(activate_button, inputs=response_a, outputs=button_a)
     response_b.change(activate_button, inputs=response_b, outputs=button_b)
     flagging_callback.setup(FLAG_COMPONENTS, "flagged")
-    button_a.click(
-        lambda *args: flag("A", args), inputs=FLAG_COMPONENTS, outputs=[button_a, button_b], preprocess=False
-    )
-    button_b.click(
-        lambda *args: flag("B", args), inputs=FLAG_COMPONENTS, outputs=[button_a, button_b], preprocess=False
-    )
+    button_a.click(flag, inputs=FLAG_COMPONENTS + [button_a], outputs=[button_a, button_b], preprocess=False)
+    button_b.click(flag, inputs=FLAG_COMPONENTS + [button_b], outputs=[button_a, button_b], preprocess=False)
 
     examples = gr.Examples(
         examples=[
