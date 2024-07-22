@@ -87,7 +87,7 @@ with gr.Blocks(
     css=".accordion { background: transparent; } .accordion .label-wrap span { font-weight: bold; font-size: 1rem; }",
     js=JS,
 ) as demo:
-    gr.Markdown("# Prompt Compression A/B Testing")
+    gr.Markdown("# Prompt Compression A/B Test")
     with gr.Accordion("About this demo:", open=False, elem_classes="accordion"):
         gr.Markdown(
             f"""
@@ -100,13 +100,12 @@ with gr.Blocks(
             - Submitted data is logged for if you flag a response (i.e. click on one of the \"x is better\" buttons).
         """
         )
-        with gr.Row():
-            target_model = gr.Radio(LLM_MODELS, value=LLM_MODELS[0], label="Target LLM Model")
-            ui_options = gr.CheckboxGroup(
-                ["Show Compressed Prompt", "Show Metrics"], label="UI Options", value=["Show Metrics"]
-            )
+        ui_options = gr.CheckboxGroup(
+            ["Show Compressed Prompt", "Show Metrics"], label="UI Options", value=["Show Metrics"]
+        )
     prompt = gr.Textbox(lines=8, label="Prompt")
     rate = gr.Slider(0.1, 1, 0.5, step=0.05, label="Rate")
+    target_model = gr.Radio(LLM_MODELS, value=LLM_MODELS[0], label="Target LLM Model")
     with gr.Row():
         clear = gr.Button("Clear")
         submit = gr.Button("Submit", variant="primary", interactive=False)
