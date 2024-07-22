@@ -84,7 +84,9 @@ with gr.Blocks(js=JS, title="LLMLingua Demo") as demo:
         """
         # Prompt Compression A/B Test
         Your prompt is sent to a target LLM model for completion, once uncompressed and once compressed using LLMLingua-2. Compare the responses and select the better one.
-        Note: the order of the responses is random.
+        Notes:
+        - The order of the responses (compressed / uncompressed prompt) is random.
+        - Compression time is included in the compressed end-to-end latency.
     """
     )
     prompt = gr.Textbox(lines=8, label="Prompt")
