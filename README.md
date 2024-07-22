@@ -1,12 +1,20 @@
----
-title: Llmlingua Demo
-emoji: 📈
-colorFrom: pink
-colorTo: green
-sdk: gradio
-sdk_version: 4.38.1
-app_file: app.py
-pinned: false
----
+# LLMLingua-2 Prompt Compression Demo
 
-Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
+## Installation
+- Install Python
+- Create and activate venv and install requirements:
+```
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+## Deployment
+```
+uvicorn app:app --host 0.0.0.0 --port 80 --log-level critical
+```
+
+## Development
+```
+uvicorn app:app --reload --log-level critical
+```

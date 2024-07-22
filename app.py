@@ -4,23 +4,28 @@ import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 from random import shuffle
+from typing import Annotated
 
 import gradio as gr
 import pandas as pd
 import requests
 import torch
 from dotenv import load_dotenv
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.responses import HTMLResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from llmlingua import PromptCompressor
 
-from utils import activate_button, handle_ui_options, create_metrics_df, flatten, update_label, create_llm_response
+from utils import activate_button, create_llm_response, create_metrics_df, flatten, handle_ui_options, update_label
 
 load_dotenv()
 
 LLM_ENDPOINT = os.getenv("LLM_ENDPOINT")
-if not LLM_ENDPOINT:
-    print("LLM_ENDPOINT environment variable is not set. Exiting...")
-    sys.exit(1)
 LLM_MODELS = ["meta-llama/Meta-Llama-3-70B-Instruct", "mistral-7b-q4", "CohereForAI/c4ai-command-r-plus"]
+MPS_AVAILABLE = torch.backends.mps.is_available()
+CUDA_AVAILABLE = torch.cuda.is_available()
+FLAG_DIRECTORY = "flagged"
+FLAG_PASSWORD = os.getenv("FLAG_PASSWORD")
 JS = """
     () => {
         if (document.cookie.includes('session=')) return;
@@ -29,14 +34,54 @@ JS = """
         document.cookie = `session=${Array(32).fill().map(() => chars.charAt(Math.floor(Math.random() * chars.length))).join('')}; expires=${date.toUTCString()}; path=/`;
     }
 """
-MPS_AVAILABLE = torch.backends.mps.is_available()
-CUDA_AVAILABLE = torch.cuda.is_available()
+
+if not LLM_ENDPOINT:
+    print("LLM_ENDPOINT environment variable is not set. Exiting...")
+    sys.exit(1)
 
 llm_lingua = PromptCompressor(
     model_name="microsoft/llmlingua-2-xlm-roberta-large-meetingbank",
     use_llmlingua2=True,
     device_map="mps" if MPS_AVAILABLE else "cuda" if CUDA_AVAILABLE else "cpu",
 )
+app = FastAPI()
+
+
+@app.get("/flagged", response_class=HTMLResponse)
+def get_flagged(credentials: Annotated[HTTPBasicCredentials, Depends(HTTPBasic())]):
+    if not FLAG_PASSWORD or credentials.password != FLAG_PASSWORD:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or missing credentials",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+    if os.path.exists(FLAG_DIRECTORY + "/log.csv"):
+        data = pd.read_csv(FLAG_DIRECTORY + "/log.csv").iloc[::-1].to_json(index=False, orient="split")
+
+        return f"""
+            <!DOCTYPE html>
+            <html>
+                <head>
+                    <title>Flagged Responses</title>
+                    <link href="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.css" rel="stylesheet">
+                    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
+                </head>
+                <body style="width: 100vw; height: 100vh; margin: 0;"><div id="table"></div></body>
+                <script>
+                    const data = {data};
+                    const container = document.querySelector('#table');
+                    const hot = new Handsontable(container, {{
+                        data: data.data,
+                        width: '100%',
+                        height: '100%',
+                        rowHeaders: true,
+                        colHeaders: data.columns,
+                        licenseKey: 'non-commercial-and-evaluation',
+                        readOnly: true,
+                    }});
+                </script>
+            </html>
+        """
 
 
 def call_llm_api(prompt: str, model: str, compressed: bool = False):
@@ -112,7 +157,7 @@ with gr.Blocks(
 
     compressed_prompt = gr.Textbox(label="Compressed Prompt", visible=False, interactive=False)
     metrics = gr.Dataframe(
-        headers=[*create_metrics_df().columns.values],
+        headers=[*create_metrics_df().columns],
         row_count=1,
         height=90,
         label="Metrics",
@@ -164,7 +209,7 @@ with gr.Blocks(
         return [activate_button(False)] * 3
 
     FLAG_COMPONENTS = [prompt, compressed_prompt, rate, metrics, response_a_obj, response_b_obj]
-    flagging_callback.setup(FLAG_COMPONENTS, "flagged")
+    flagging_callback.setup(FLAG_COMPONENTS, FLAG_DIRECTORY)
     response_a.change(activate_button, inputs=response_a, outputs=button_a)
     response_a.change(activate_button, inputs=response_a, outputs=button_ab)
     response_b.change(activate_button, inputs=response_b, outputs=button_b)
@@ -190,4 +235,4 @@ with gr.Blocks(
     )
 
 
-demo.launch()
+app = gr.mount_gradio_app(app, demo, path="/")
