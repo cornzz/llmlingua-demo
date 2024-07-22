@@ -20,7 +20,6 @@ LLM_ENDPOINT = os.getenv("LLM_ENDPOINT")
 if not LLM_ENDPOINT:
     print("LLM_ENDPOINT environment variable is not set. Exiting...")
     sys.exit(1)
-
 LLM_MODELS = ["meta-llama/Meta-Llama-3-70B-Instruct", "mistral-7b-q4", "CohereForAI/c4ai-command-r-plus"]
 JS = """
     () => {
@@ -30,21 +29,25 @@ JS = """
         document.cookie = `session=${Array(32).fill().map(() => chars.charAt(Math.floor(Math.random() * chars.length))).join('')}; expires=${date.toUTCString()}; path=/`;
     }
 """
+MPS_AVAILABLE = torch.backends.mps.is_available()
+CUDA_AVAILABLE = torch.cuda.is_available()
 
 llm_lingua = PromptCompressor(
     model_name="microsoft/llmlingua-2-xlm-roberta-large-meetingbank",
     use_llmlingua2=True,
-    device_map="mps" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu",
+    device_map="mps" if MPS_AVAILABLE else "cuda" if CUDA_AVAILABLE else "cpu",
 )
 
 
 def call_llm_api(prompt: str, model: str, compressed: bool = False):
     headers = {"Content-Type": "application/json", "Authorization": "Bearer no-key"}
-    data = json.dumps({
-        "model": model,
-        "messages": [{"role": "user", "content": prompt}],
-        "max_tokens": 1000,
-    })
+    data = json.dumps(
+        {
+            "model": model,
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": 1000,
+        }
+    )
     start = time.time()
     response = requests.post(LLM_ENDPOINT, headers=headers, data=data)
     return create_llm_response(response, compressed, response.status_code != 200, start, end=time.time())
@@ -79,16 +82,22 @@ def run(prompt: str, rate: float, target_model: str):
 
 flagging_callback = gr.CSVLogger()
 
-with gr.Blocks(title="LLMLingua Demo", css=".accordion { background: transparent; } .accordion .label-wrap span { font-weight: bold; }", js=JS) as demo:
+with gr.Blocks(
+    title="LLMLingua Demo",
+    css=".accordion { background: transparent; } .accordion .label-wrap span { font-weight: bold; font-size: 1rem; }",
+    js=JS,
+) as demo:
     gr.Markdown("# Prompt Compression A/B Testing")
     with gr.Accordion("About this demo:", open=False, elem_classes="accordion"):
         gr.Markdown(
             f"""
             Your prompt is sent to a target LLM model for completion, once uncompressed and once compressed using LLMLingua-2. Compare the responses and select the better one.
             Notes:
-            - The order of the responses (compressed / uncompressed prompt) is random.
+            - The order of the responses (compressed / uncompressed prompt) is randomized.
             - Compression time is included in the compressed end-to-end latency.
             {'- Compression is done on a CPU. Using a GPU would be faster.' if not (MPS_AVAILABLE or CUDA_AVAILABLE) else ""}
+            - This demo primarily focuses on evaluating the quality of responses to compressed prompts. Uncompressed and compressed prompts are processed simultaneously; thus, the displayed end-to-end latencies may not be very meaningful.
+            - Submitted data is logged for if you flag a response (i.e. click on one of the \"x is better\" buttons).
         """
         )
     prompt = gr.Textbox(lines=8, label="Prompt")
