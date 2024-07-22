@@ -22,7 +22,14 @@ if not LLM_ENDPOINT:
     sys.exit(1)
 
 LLM_MODELS = ["meta-llama/Meta-Llama-3-70B-Instruct", "mistral-7b-q4", "CohereForAI/c4ai-command-r-plus"]
-JS = "() => { if (document.cookie.includes('session=')) return; const date = new Date(+new Date() + 10*365*24*60*60*1000); document.cookie = `session=${crypto.randomUUID()}; expires=${date.toUTCString()}; path=/`;}"
+JS = """
+    () => {
+        if (document.cookie.includes('session=')) return;
+        const date = new Date(+new Date() + 10*365*24*60*60*1000);
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        document.cookie = `session=${Array(32).fill().map(() => chars.charAt(Math.floor(Math.random() * chars.length))).join('')}; expires=${date.toUTCString()}; path=/`;
+    }
+"""
 
 llm_lingua = PromptCompressor(
     model_name="microsoft/llmlingua-2-xlm-roberta-large-meetingbank",
