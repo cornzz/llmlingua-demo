@@ -79,7 +79,7 @@ def run(prompt: str, rate: float, target_model: str):
 
 flagging_callback = gr.CSVLogger()
 
-with gr.Blocks(js=JS) as demo:
+with gr.Blocks(js=JS, title="LLMLingua Demo") as demo:
     gr.Markdown(
         """
         # Prompt Compression A/B Test
