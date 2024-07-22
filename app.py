@@ -79,16 +79,18 @@ def run(prompt: str, rate: float, target_model: str):
 
 flagging_callback = gr.CSVLogger()
 
-with gr.Blocks(js=JS, title="LLMLingua Demo") as demo:
-    gr.Markdown(
+with gr.Blocks(title="LLMLingua Demo", css=".accordion { background: transparent; } .accordion .label-wrap span { font-weight: bold; }", js=JS) as demo:
+    gr.Markdown("# Prompt Compression A/B Testing")
+    with gr.Accordion("About this demo:", open=False, elem_classes="accordion"):
+        gr.Markdown(
+            f"""
+            Your prompt is sent to a target LLM model for completion, once uncompressed and once compressed using LLMLingua-2. Compare the responses and select the better one.
+            Notes:
+            - The order of the responses (compressed / uncompressed prompt) is random.
+            - Compression time is included in the compressed end-to-end latency.
+            {'- Compression is done on a CPU. Using a GPU would be faster.' if not (MPS_AVAILABLE or CUDA_AVAILABLE) else ""}
         """
-        # Prompt Compression A/B Test
-        Your prompt is sent to a target LLM model for completion, once uncompressed and once compressed using LLMLingua-2. Compare the responses and select the better one.
-        Notes:
-        - The order of the responses (compressed / uncompressed prompt) is random.
-        - Compression time is included in the compressed end-to-end latency.
-    """
-    )
+        )
     prompt = gr.Textbox(lines=8, label="Prompt")
     rate = gr.Slider(0.1, 1, 0.5, step=0.05, label="Rate")
     target_model = gr.Radio(LLM_MODELS, value=LLM_MODELS[0], label="Target LLM Model")
