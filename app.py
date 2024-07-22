@@ -12,7 +12,7 @@ import torch
 from dotenv import load_dotenv
 from llmlingua import PromptCompressor
 
-from utils import activate_button, create_metrics_df, flatten, update_label
+from utils import activate_button, create_metrics_df, flatten, update_label, create_llm_response
 
 load_dotenv()
 
@@ -40,33 +40,39 @@ llm_lingua = PromptCompressor(
 
 def call_llm_api(prompt: str, model: str, compressed: bool = False):
     headers = {"Content-Type": "application/json", "Authorization": "Bearer no-key"}
-    data = {
+    data = json.dumps({
         "model": model,
         "messages": [{"role": "user", "content": prompt}],
         "max_tokens": 1000,
-    }
-    response = requests.post(LLM_ENDPOINT, headers=headers, data=json.dumps(data))
-    if response.status_code == 200:
-        response_obj = response.json()
-        return response_obj["choices"][0]["message"]["content"], {"compressed": compressed, **response_obj}
-    else:
-        return response.text, {"compressed": compressed, "error": response.text, "status": response.status_code}
+    })
+    start = time.time()
+    response = requests.post(LLM_ENDPOINT, headers=headers, data=data)
+    return create_llm_response(response, compressed, response.status_code != 200, start, end=time.time())
 
 
 def compress_prompt(prompt: str, rate: float):
+    start = time.time()
     result = llm_lingua.compress_prompt(prompt, rate=rate)
+    compression_time = time.time() - start
 
-    return result["compressed_prompt"], create_metrics_df(result)
+    return result["compressed_prompt"], create_metrics_df(result), compression_time
 
 
 def run(prompt: str, rate: float, target_model: str):
     with ThreadPoolExecutor() as executor:
         start = time.time()
         future_original = executor.submit(call_llm_api, prompt, target_model)
-        compressed_prompt, metrics = compress_prompt(prompt, rate)
+        compressed_prompt, metrics, compression_time = compress_prompt(prompt, rate)
         responses = [call_llm_api(compressed_prompt, target_model, True), future_original.result()]
         print(f"Processing time: {time.time() - start:.2f}s")
 
+    end_to_end_original = responses[1][1]["call_time"]
+    end_to_end_compressed = responses[0][1]["call_time"] + compression_time
+    metrics["Compression"] = [f"{compression_time:.2f}s"]
+    metrics["End-to-end Latency"] = [f"{end_to_end_original:.2f}s"]
+    metrics["End-to-end Latency Compressed (Speedup)"] = [
+        f"{end_to_end_compressed:.2f}s ({end_to_end_original / end_to_end_compressed:.2f}x)"
+    ]
     shuffle(responses)
     return compressed_prompt, metrics, *flatten(responses)
 
