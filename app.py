@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 from random import shuffle
@@ -16,6 +17,10 @@ from utils import activate_button, create_metrics_df, flatten, update_label
 load_dotenv()
 
 LLM_ENDPOINT = os.getenv("LLM_ENDPOINT")
+if not LLM_ENDPOINT:
+    print("LLM_ENDPOINT environment variable is not set. Exiting...")
+    sys.exit(1)
+
 LLM_MODELS = ["meta-llama/Meta-Llama-3-70B-Instruct", "mistral-7b-q4", "CohereForAI/c4ai-command-r-plus"]
 JS = "() => { if (document.cookie.includes('session=')) return; const date = new Date(+new Date() + 10*365*24*60*60*1000); document.cookie = `session=${crypto.randomUUID()}; expires=${date.toUTCString()}; path=/`;}"
 
@@ -130,7 +135,9 @@ with gr.Blocks(js=JS) as demo:
     response_b.change(activate_button, inputs=response_b, outputs=button_b)
     flagging_callback.setup(FLAG_COMPONENTS, "flagged")
     button_a.click(flag, inputs=FLAG_COMPONENTS + [button_a], outputs=[button_a, button_ab, button_b], preprocess=False)
-    button_ab.click(flag, inputs=FLAG_COMPONENTS + [button_ab], outputs=[button_a, button_ab, button_b], preprocess=False)
+    button_ab.click(
+        flag, inputs=FLAG_COMPONENTS + [button_ab], outputs=[button_a, button_ab, button_b], preprocess=False
+    )
     button_b.click(flag, inputs=FLAG_COMPONENTS + [button_b], outputs=[button_a, button_ab, button_b], preprocess=False)
 
     examples = gr.Examples(
