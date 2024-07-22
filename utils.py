@@ -23,6 +23,10 @@ def activate_button(value):
     return gr.Button(interactive=bool(value))
 
 
+def handle_ui_options(value: list[str]):
+    return gr.Textbox(visible="Show Compressed Prompt" in value), gr.DataFrame(visible="Show Metrics" in value)
+
+
 def update_label(content: str, textbox: gr.Textbox):
     return gr.Textbox(label=textbox.label.split(" (")[0] + f" ({len(content.split())} words)")
 

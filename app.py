@@ -12,7 +12,7 @@ import torch
 from dotenv import load_dotenv
 from llmlingua import PromptCompressor
 
-from utils import activate_button, create_metrics_df, flatten, update_label, create_llm_response
+from utils import activate_button, handle_ui_options, create_metrics_df, flatten, update_label, create_llm_response
 
 load_dotenv()
 
@@ -100,14 +100,18 @@ with gr.Blocks(
             - Submitted data is logged for if you flag a response (i.e. click on one of the \"x is better\" buttons).
         """
         )
+        with gr.Row():
+            target_model = gr.Radio(LLM_MODELS, value=LLM_MODELS[0], label="Target LLM Model")
+            ui_options = gr.CheckboxGroup(
+                ["Show Compressed Prompt", "Show Metrics"], label="UI Options", value=["Show Metrics"]
+            )
     prompt = gr.Textbox(lines=8, label="Prompt")
     rate = gr.Slider(0.1, 1, 0.5, step=0.05, label="Rate")
-    target_model = gr.Radio(LLM_MODELS, value=LLM_MODELS[0], label="Target LLM Model")
     with gr.Row():
-        clear = gr.Button("Clear", variant="secondary")
+        clear = gr.Button("Clear")
         submit = gr.Button("Submit", variant="primary", interactive=False)
 
-    compressed_prompt = gr.Textbox(label="Compressed Prompt", visible=False)
+    compressed_prompt = gr.Textbox(label="Compressed Prompt", visible=False, interactive=False)
     metrics = gr.Dataframe(
         headers=[*create_metrics_df().columns.values],
         row_count=1,
@@ -127,6 +131,7 @@ with gr.Blocks(
             button_ab = gr.Button("Neither is better", interactive=False)
             button_b = gr.Button("B is better", interactive=False)
 
+    # Event handling
     prompt.change(activate_button, inputs=prompt, outputs=submit)
     submit.click(
         run,
@@ -146,26 +151,31 @@ with gr.Blocks(
             rate,
         ],
     )
+    ui_options.change(handle_ui_options, inputs=ui_options, outputs=[compressed_prompt, metrics])
 
+    # Update response textbox labels with word count
     response_a.change(lambda x: update_label(x, response_a), inputs=response_a, outputs=response_a)
     response_b.change(lambda x: update_label(x, response_b), inputs=response_b, outputs=response_b)
 
+    # Flagging
     def flag(prompt, compr_prompt, rate, metrics, res_a_obj, res_b_obj, flag_button, request: gr.Request):
         args = [prompt, compr_prompt, rate, metrics, res_a_obj, res_b_obj]
         flagging_callback.flag(args, flag_option=flag_button[0], username=request.cookies["session"])
+        gr.Info("Preference saved. Thank you for your feedback.")
         return [activate_button(False)] * 3
 
     FLAG_COMPONENTS = [prompt, compressed_prompt, rate, metrics, response_a_obj, response_b_obj]
+    flagging_callback.setup(FLAG_COMPONENTS, "flagged")
     response_a.change(activate_button, inputs=response_a, outputs=button_a)
     response_a.change(activate_button, inputs=response_a, outputs=button_ab)
     response_b.change(activate_button, inputs=response_b, outputs=button_b)
-    flagging_callback.setup(FLAG_COMPONENTS, "flagged")
     button_a.click(flag, inputs=FLAG_COMPONENTS + [button_a], outputs=[button_a, button_ab, button_b], preprocess=False)
     button_ab.click(
         flag, inputs=FLAG_COMPONENTS + [button_ab], outputs=[button_a, button_ab, button_b], preprocess=False
     )
     button_b.click(flag, inputs=FLAG_COMPONENTS + [button_b], outputs=[button_a, button_ab, button_b], preprocess=False)
 
+    # Examples
     examples = gr.Examples(
         examples=[
             [
