@@ -97,7 +97,7 @@ with gr.Blocks(
             - Compression time is included in the compressed end-to-end latency.
             {'- Compression is done on a CPU. Using a GPU would be faster.' if not (MPS_AVAILABLE or CUDA_AVAILABLE) else ""}
             - This demo primarily focuses on evaluating the quality of responses to compressed prompts. Uncompressed and compressed prompts are processed simultaneously; thus, the displayed end-to-end latencies may not be very meaningful.
-            - Submitted data is logged for if you flag a response (i.e. click on one of the \"x is better\" buttons).
+            - Submitted data is logged if you flag a response (i.e. click on one of the \"x is better\" buttons).
         """
         )
         ui_options = gr.CheckboxGroup(
