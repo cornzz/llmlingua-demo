@@ -24,7 +24,13 @@ def activate_button(*values):
 
 
 def handle_ui_options(value: list[str]):
-    return gr.Textbox(visible="Show Compressed Prompt" in value), gr.DataFrame(visible="Show Metrics" in value)
+    show_prompt = "Show separate context field" in value
+    return (
+        gr.Textbox(visible=True) if show_prompt else gr.Textbox(visible=False, value=None),
+        gr.Textbox(label="Context" if show_prompt else "Prompt"),
+        gr.DataFrame(visible="Show Metrics" in value),
+        gr.Textbox(visible="Show Compressed Prompt" in value),
+    )
 
 
 def update_label(content: str, textbox: gr.Textbox):

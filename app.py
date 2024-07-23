@@ -85,7 +85,9 @@ def compress_prompt(prompt: str, rate: float):
 def run_demo(prompt: str, context: str, rate: float, target_model: str):
     with ThreadPoolExecutor() as executor:
         start = time.time()
-        future_original = executor.submit(call_llm_api, "\n".join([prompt, context]) if prompt else context, target_model)
+        future_original = executor.submit(
+            call_llm_api, "\n".join([prompt, context]) if prompt else context, target_model
+        )
         compressed, metrics, compression_time = compress_prompt(context, rate)
         responses = [
             call_llm_api("\n".join([prompt, compressed]) if prompt else compressed, target_model, True),
@@ -119,7 +121,9 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
         """
         )
         ui_options = gr.CheckboxGroup(
-            ["Show Compressed Prompt", "Show Metrics"], label="UI Options", value=["Show Metrics"]
+            ["Show separate context field", "Show Compressed Prompt", "Show Metrics"],
+            label="UI Options",
+            value=["Show separate context field", "Show Metrics"],
         )
     prompt = gr.Textbox(label="Prompt (will not be compressed)", lines=1, max_lines=1)
     context = gr.Textbox(label="Context", lines=8, max_lines=8, elem_classes="word_count")
@@ -186,7 +190,7 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
             qa_pairs,
         ],
     )
-    ui_options.change(handle_ui_options, inputs=ui_options, outputs=[compressed, metrics])
+    ui_options.change(handle_ui_options, inputs=ui_options, outputs=[prompt, context, metrics, compressed])
     response_a.change(lambda x: update_label(x, response_a), inputs=response_a, outputs=response_a)
     response_b.change(lambda x: update_label(x, response_b), inputs=response_b, outputs=response_b)
     examples.select(
