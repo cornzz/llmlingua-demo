@@ -19,8 +19,8 @@ def create_metrics_df(result=None):
     return df
 
 
-def activate_button(value):
-    return gr.Button(interactive=bool(value))
+def activate_button(*values):
+    return gr.Button(interactive=any(bool(value) for value in values))
 
 
 def handle_ui_options(value: list[str]):

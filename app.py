@@ -82,12 +82,15 @@ def compress_prompt(prompt: str, rate: float):
     return result["compressed_prompt"], create_metrics_df(result), compression_time
 
 
-def run_demo(prompt: str, rate: float, target_model: str):
+def run_demo(prompt: str, context: str, rate: float, target_model: str):
     with ThreadPoolExecutor() as executor:
         start = time.time()
-        future_original = executor.submit(call_llm_api, prompt, target_model)
-        compressed_prompt, metrics, compression_time = compress_prompt(prompt, rate)
-        responses = [call_llm_api(compressed_prompt, target_model, True), future_original.result()]
+        future_original = executor.submit(call_llm_api, "\n".join([prompt, context]) if prompt else context, target_model)
+        compressed, metrics, compression_time = compress_prompt(context, rate)
+        responses = [
+            call_llm_api("\n".join([prompt, compressed]) if prompt else compressed, target_model, True),
+            future_original.result(),
+        ]
         print(f"Processing time: {time.time() - start:.2f}s")
 
     end_to_end_original = responses[1][1]["call_time"]
@@ -98,7 +101,7 @@ def run_demo(prompt: str, rate: float, target_model: str):
         f"{end_to_end_compressed:.2f}s ({end_to_end_original / end_to_end_compressed:.2f}x)"
     ]
     shuffle(responses)
-    return compressed_prompt, metrics, *flatten(responses)
+    return compressed, metrics, *flatten(responses)
 
 
 with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
@@ -118,14 +121,15 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
         ui_options = gr.CheckboxGroup(
             ["Show Compressed Prompt", "Show Metrics"], label="UI Options", value=["Show Metrics"]
         )
-    prompt = gr.Textbox(label="Prompt", lines=8, max_lines=8, elem_classes="word_count")
+    prompt = gr.Textbox(label="Prompt (will not be compressed)", lines=1, max_lines=1)
+    context = gr.Textbox(label="Context", lines=8, max_lines=8, elem_classes="word_count")
     rate = gr.Slider(0.1, 1, 0.5, step=0.05, label="Rate")
     target_model = gr.Radio(label="Target LLM Model", choices=LLM_MODELS, value=LLM_MODELS[0])
     with gr.Row():
         clear = gr.Button("Clear")
         submit = gr.Button("Submit", variant="primary", interactive=False)
 
-    compressed_prompt = gr.Textbox(label="Compressed Prompt", visible=False, interactive=False)
+    compressed = gr.Textbox(label="Compressed Prompt", visible=False, interactive=False)
     metrics = gr.Dataframe(
         label="Metrics",
         headers=[*create_metrics_df().columns],
@@ -160,17 +164,19 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
     )
 
     # Event handling
-    prompt.change(activate_button, inputs=prompt, outputs=submit)
+    prompt.change(activate_button, inputs=[prompt, context], outputs=submit)
+    context.change(activate_button, inputs=[prompt, context], outputs=submit)
     submit.click(
         run_demo,
-        inputs=[prompt, rate, target_model],
-        outputs=[compressed_prompt, metrics, response_a, response_a_obj, response_b, response_b_obj],
+        inputs=[prompt, context, rate, target_model],
+        outputs=[compressed, metrics, response_a, response_a_obj, response_b, response_b_obj],
     )
     clear.click(
-        lambda: [None] * 6 + [0.5, create_metrics_df(), gr.DataFrame(visible=False)],
+        lambda: [None] * 7 + [0.5, create_metrics_df(), gr.DataFrame(visible=False)],
         outputs=[
             prompt,
-            compressed_prompt,
+            context,
+            compressed,
             response_a_obj,
             response_a,
             response_b_obj,
@@ -180,7 +186,7 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
             qa_pairs,
         ],
     )
-    ui_options.change(handle_ui_options, inputs=ui_options, outputs=[compressed_prompt, metrics])
+    ui_options.change(handle_ui_options, inputs=ui_options, outputs=[compressed, metrics])
     response_a.change(lambda x: update_label(x, response_a), inputs=response_a, outputs=response_a)
     response_b.change(lambda x: update_label(x, response_b), inputs=response_b, outputs=response_b)
     examples.select(
@@ -193,17 +199,17 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
             ),
         ),
         inputs=examples,
-        outputs=[prompt, qa_pairs],
+        outputs=[context, qa_pairs],
     )
 
     # Flagging
-    def flag(prompt, compr_prompt, rate, metrics, res_a_obj, res_b_obj, flag_button, request: gr.Request):
-        args = [prompt, compr_prompt, rate, metrics, res_a_obj, res_b_obj]
+    def flag(prompt, context, compr_prompt, rate, metrics, res_a_obj, res_b_obj, flag_button, request: gr.Request):
+        args = [prompt, context, compr_prompt, rate, metrics, res_a_obj, res_b_obj]
         flagging_callback.flag(args, flag_option=flag_button[0], username=request.cookies["session"])
         gr.Info("Preference saved. Thank you for your feedback.")
         return [activate_button(False)] * 3
 
-    FLAG_COMPONENTS = [prompt, compressed_prompt, rate, metrics, response_a_obj, response_b_obj]
+    FLAG_COMPONENTS = [prompt, context, compressed, rate, metrics, response_a_obj, response_b_obj]
     flagging_callback.setup(FLAG_COMPONENTS, FLAG_DIRECTORY)
     response_a.change(activate_button, inputs=response_a, outputs=flag_a)
     response_a.change(activate_button, inputs=response_a, outputs=flag_ab)
