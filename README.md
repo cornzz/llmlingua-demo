@@ -11,10 +11,10 @@ pip install -r requirements.txt
 
 ## Deployment
 ```
-uvicorn app:app --host 0.0.0.0 --port 80 --log-level critical
+uvicorn app:app --host 0.0.0.0 --port 80 --log-level warning
 ```
 
 ## Development
 ```
-uvicorn app:app --reload --log-level critical
+uvicorn app:app --reload --log-level warning
 ```
