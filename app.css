@@ -1,0 +1,12 @@
+.accordion {
+    background: transparent;
+}
+
+.accordion .label-wrap span {
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+.gallery-item {
+    max-height: 100px;
+}

@@ -26,25 +26,24 @@ MPS_AVAILABLE = torch.backends.mps.is_available()
 CUDA_AVAILABLE = torch.cuda.is_available()
 FLAG_DIRECTORY = "flagged"
 FLAG_PASSWORD = os.getenv("FLAG_PASSWORD")
-JS = """
-    () => {
-        if (document.cookie.includes('session=')) return;
-        const date = new Date(+new Date() + 10*365*24*60*60*1000);
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        document.cookie = `session=${Array(32).fill().map(() => chars.charAt(Math.floor(Math.random() * chars.length))).join('')}; expires=${date.toUTCString()}; path=/`;
-    }
-"""
+with open("app.js") as f:
+    JS = f.read()
+with open("app.css") as f:
+    CSS = f.read()
 
 if not LLM_ENDPOINT:
     print("LLM_ENDPOINT environment variable is not set. Exiting...")
     sys.exit(1)
 
+app = FastAPI()
 llm_lingua = PromptCompressor(
     model_name="microsoft/llmlingua-2-xlm-roberta-large-meetingbank",
     use_llmlingua2=True,
     device_map="mps" if MPS_AVAILABLE else "cuda" if CUDA_AVAILABLE else "cpu",
 )
-app = FastAPI()
+flagging_callback = gr.CSVLogger()
+with open("data/examples.json") as f:
+    example_dataset = json.load(f)
 
 
 @app.get("/flagged", response_class=HTMLResponse)
@@ -57,31 +56,8 @@ def get_flagged(credentials: Annotated[HTTPBasicCredentials, Depends(HTTPBasic()
         )
     if os.path.exists(FLAG_DIRECTORY + "/log.csv"):
         data = pd.read_csv(FLAG_DIRECTORY + "/log.csv").iloc[::-1].to_json(index=False, orient="split")
-
-        return f"""
-            <!DOCTYPE html>
-            <html>
-                <head>
-                    <title>Flagged Responses</title>
-                    <link href="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.css" rel="stylesheet">
-                    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
-                </head>
-                <body style="width: 100vw; height: 100vh; margin: 0;"><div id="table"></div></body>
-                <script>
-                    const data = {data};
-                    const container = document.querySelector('#table');
-                    const hot = new Handsontable(container, {{
-                        data: data.data,
-                        width: '100%',
-                        height: '100%',
-                        rowHeaders: true,
-                        colHeaders: data.columns,
-                        licenseKey: 'non-commercial-and-evaluation',
-                        readOnly: true,
-                    }});
-                </script>
-            </html>
-        """
+        with open("flagged.html") as f:
+            return f.read().replace("{ data }", data)
 
 
 def call_llm_api(prompt: str, model: str, compressed: bool = False):
@@ -106,7 +82,7 @@ def compress_prompt(prompt: str, rate: float):
     return result["compressed_prompt"], create_metrics_df(result), compression_time
 
 
-def run(prompt: str, rate: float, target_model: str):
+def run_demo(prompt: str, rate: float, target_model: str):
     with ThreadPoolExecutor() as executor:
         start = time.time()
         future_original = executor.submit(call_llm_api, prompt, target_model)
@@ -125,13 +101,7 @@ def run(prompt: str, rate: float, target_model: str):
     return compressed_prompt, metrics, *flatten(responses)
 
 
-flagging_callback = gr.CSVLogger()
-
-with gr.Blocks(
-    title="LLMLingua Demo",
-    css=".accordion { background: transparent; } .accordion .label-wrap span { font-weight: bold; font-size: 1rem; }",
-    js=JS,
-) as demo:
+with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
     gr.Markdown("# Prompt Compression A/B Test")
     with gr.Accordion("About this demo:", open=False, elem_classes="accordion"):
         gr.Markdown(
@@ -148,19 +118,19 @@ with gr.Blocks(
         ui_options = gr.CheckboxGroup(
             ["Show Compressed Prompt", "Show Metrics"], label="UI Options", value=["Show Metrics"]
         )
-    prompt = gr.Textbox(lines=8, label="Prompt")
+    prompt = gr.Textbox(label="Prompt", lines=8, max_lines=8, elem_classes="word_count")
     rate = gr.Slider(0.1, 1, 0.5, step=0.05, label="Rate")
-    target_model = gr.Radio(LLM_MODELS, value=LLM_MODELS[0], label="Target LLM Model")
+    target_model = gr.Radio(label="Target LLM Model", choices=LLM_MODELS, value=LLM_MODELS[0])
     with gr.Row():
         clear = gr.Button("Clear")
         submit = gr.Button("Submit", variant="primary", interactive=False)
 
     compressed_prompt = gr.Textbox(label="Compressed Prompt", visible=False, interactive=False)
     metrics = gr.Dataframe(
+        label="Metrics",
         headers=[*create_metrics_df().columns],
         row_count=1,
         height=90,
-        label="Metrics",
         show_label=False,
         interactive=False,
     )
@@ -171,21 +141,34 @@ with gr.Blocks(
             response_b = gr.Textbox(label="LLM Response B", lines=10, max_lines=10, autoscroll=False, interactive=False)
             response_b_obj = gr.Textbox(label="Response B", visible=False)
         with gr.Row():
-            button_a = gr.Button("A is better", interactive=False)
-            button_ab = gr.Button("Neither is better", interactive=False)
-            button_b = gr.Button("B is better", interactive=False)
+            flag_a = gr.Button("A is better", interactive=False)
+            flag_ab = gr.Button("Neither is better", interactive=False)
+            flag_b = gr.Button("B is better", interactive=False)
+
+    # Examples
+    gr.Markdown("## Examples (click to select)")
+    qa_pairs = gr.Dataframe(
+        label="GPT-4 generated QA pairs related to the original prompt:",
+        headers=["Question", "Answer"],
+        visible=False,
+    )
+    examples = gr.Dataset(
+        samples=[[example["original_prompt"]] for example in example_dataset],
+        components=[gr.Textbox(visible=False)],
+        samples_per_page=5,
+        type="index",
+    )
 
     # Event handling
     prompt.change(activate_button, inputs=prompt, outputs=submit)
     submit.click(
-        run,
+        run_demo,
         inputs=[prompt, rate, target_model],
         outputs=[compressed_prompt, metrics, response_a, response_a_obj, response_b, response_b_obj],
     )
     clear.click(
-        lambda: [create_metrics_df()] + [None] * 6 + [0.5],
+        lambda: [None] * 6 + [0.5, create_metrics_df(), gr.DataFrame(visible=False)],
         outputs=[
-            metrics,
             prompt,
             compressed_prompt,
             response_a_obj,
@@ -193,13 +176,25 @@ with gr.Blocks(
             response_b_obj,
             response_b,
             rate,
+            metrics,
+            qa_pairs,
         ],
     )
     ui_options.change(handle_ui_options, inputs=ui_options, outputs=[compressed_prompt, metrics])
-
-    # Update response textbox labels with word count
     response_a.change(lambda x: update_label(x, response_a), inputs=response_a, outputs=response_a)
     response_b.change(lambda x: update_label(x, response_b), inputs=response_b, outputs=response_b)
+    examples.select(
+        lambda idx: (
+            example_dataset[idx]["original_prompt"],
+            (
+                gr.DataFrame(example_dataset[idx]["QA_pairs"], visible=True)
+                if "QA_pairs" in example_dataset[idx]
+                else gr.DataFrame(visible=False)
+            ),
+        ),
+        inputs=examples,
+        outputs=[prompt, qa_pairs],
+    )
 
     # Flagging
     def flag(prompt, compr_prompt, rate, metrics, res_a_obj, res_b_obj, flag_button, request: gr.Request):
@@ -210,29 +205,12 @@ with gr.Blocks(
 
     FLAG_COMPONENTS = [prompt, compressed_prompt, rate, metrics, response_a_obj, response_b_obj]
     flagging_callback.setup(FLAG_COMPONENTS, FLAG_DIRECTORY)
-    response_a.change(activate_button, inputs=response_a, outputs=button_a)
-    response_a.change(activate_button, inputs=response_a, outputs=button_ab)
-    response_b.change(activate_button, inputs=response_b, outputs=button_b)
-    button_a.click(flag, inputs=FLAG_COMPONENTS + [button_a], outputs=[button_a, button_ab, button_b], preprocess=False)
-    button_ab.click(
-        flag, inputs=FLAG_COMPONENTS + [button_ab], outputs=[button_a, button_ab, button_b], preprocess=False
-    )
-    button_b.click(flag, inputs=FLAG_COMPONENTS + [button_b], outputs=[button_a, button_ab, button_b], preprocess=False)
-
-    # Examples
-    examples = gr.Examples(
-        examples=[
-            [
-                "John: So, um, I've been thinking about the project, you know, and I believe we need to, uh, make some changes. I mean, we want the project to succeed, right? So, like, I think we should consider maybe revising the timeline. Sarah: I totally agree, John. I mean, we have to be realistic, you know. The timeline is, like, too tight. You know what I mean? We should definitely extend it.",
-                0.3,
-            ],
-            [
-                "Item 15, report from City Manager Recommendation to adopt three resolutions. First, to join the Victory Pace program. Second, to join the California first program. And number three, consenting to to inclusion of certain properties within the jurisdiction in the California Hero program. It was emotion, motion, a second and public comment. CNN. Please cast your vote. Oh. Was your public comment? Yeah. Please come forward. I thank you, Mr. Mayor. Thank you. Members of the council. My name is Alex Mitchell. I represent the hero program. Just wanted to let you know that the hero program. Has been in California for the last three and a half years. We’re in. Over 20. We’re in 28 counties, and we’ve completed over 29,000 energy efficient projects to make homes. Greener and more energy efficient. And this includes anything. From solar to water. Efficiency. We’ve done. Almost.$550 million in home improvements.",
-                0.5,
-            ],
-        ],
-        inputs=[prompt, rate],
-    )
+    response_a.change(activate_button, inputs=response_a, outputs=flag_a)
+    response_a.change(activate_button, inputs=response_a, outputs=flag_ab)
+    response_b.change(activate_button, inputs=response_b, outputs=flag_b)
+    flag_a.click(flag, inputs=FLAG_COMPONENTS + [flag_a], outputs=[flag_a, flag_ab, flag_b], preprocess=False)
+    flag_ab.click(flag, inputs=FLAG_COMPONENTS + [flag_ab], outputs=[flag_a, flag_ab, flag_b], preprocess=False)
+    flag_b.click(flag, inputs=FLAG_COMPONENTS + [flag_b], outputs=[flag_a, flag_ab, flag_b], preprocess=False)
 
 
 app = gr.mount_gradio_app(app, demo, path="/")
