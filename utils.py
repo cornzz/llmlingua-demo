@@ -43,6 +43,13 @@ def flatten(xss):
     return [x for xs in xss for x in xs]
 
 
+def get_message(response):
+    if "choices" in response:
+        return response["choices"][0]["message"]["content"]
+    else:
+        return f'{response["status"]} - {response["error"]}'
+
+
 def create_llm_response(response, compressed, error, start, end):
     if not error:
         response = response.json()
@@ -54,7 +61,7 @@ def create_llm_response(response, compressed, error, start, end):
     }
     if not error:
         obj.update(response)
-    return [response["choices"][0]["message"]["content"] if not error else response.text, obj]
+    return [get_message(response) if not error else response.text, obj]
 
 
 def prepare_flagged_data(data):
@@ -72,12 +79,12 @@ def prepare_flagged_data(data):
     data["Response A"], data["Response B"] = zip(
         *data.apply(
             lambda x: (
-                (x["Response B"], x["Response A"])
+                map(get_message, [x["Response B"], x["Response A"]])
                 if not x["Response A"]["compressed"]
-                else (x["Response A"], x["Response B"])
+                else map(get_message, [x["Response A"], x["Response B"]])
             ),
             axis=1,
         )
     )
     data = data.rename(columns={"Response A": "Compressed", "Response B": "Uncompressed"})
-    return data.iloc[::-1].to_html(index=False, table_id="table", notebook=True)
+    return data.iloc[::-1].to_html(index=False, table_id="table")
