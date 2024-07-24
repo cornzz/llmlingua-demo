@@ -71,6 +71,8 @@ def call_llm_api(prompt: str, model: str, compressed: bool = False):
     )
     start = time.time()
     response = requests.post(LLM_ENDPOINT, headers=headers, data=data)
+    if response.status_code != 200:
+        gr.Warning(f"Error calling LLM API: {response.status_code} - {response.text}")
     return create_llm_response(response, compressed, response.status_code != 200, start, end=time.time())
 
 
