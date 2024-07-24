@@ -211,6 +211,7 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
     response_b.change(lambda x: update_label(x, response_b), inputs=response_b, outputs=response_b)
     examples.select(
         lambda idx: (
+            None,
             example_dataset[idx]["original_prompt"],
             (
                 gr.DataFrame(example_dataset[idx]["QA_pairs"], visible=True)
@@ -219,7 +220,7 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
             ),
         ),
         inputs=examples,
-        outputs=[context, qa_pairs],
+        outputs=[prompt, context, qa_pairs],
     )
 
     # Flagging
