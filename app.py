@@ -55,9 +55,9 @@ def get_flagged(credentials: Annotated[HTTPBasicCredentials, Depends(HTTPBasic()
             headers={"WWW-Authenticate": "Basic"},
         )
     if os.path.exists(FLAG_DIRECTORY + "/log.csv"):
-        data = pd.read_csv(FLAG_DIRECTORY + "/log.csv").iloc[::-1].to_json(index=False, orient="split")
+        data = pd.read_csv(FLAG_DIRECTORY + "/log.csv").iloc[::-1].to_html(index=False, table_id="table")
         with open("flagged.html") as f:
-            return f.read().replace("{ data }", data)
+            return f.read().replace("{{ data }}", data)
 
 
 def call_llm_api(prompt: str, model: str, compressed: bool = False):
