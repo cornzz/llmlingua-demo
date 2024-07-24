@@ -120,13 +120,16 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
             - Submitted data is logged if you flag a response (i.e. click on one of the \"x is better\" buttons).
         """
         )
-        ui_options = gr.CheckboxGroup(
-            ["Show separate context field", "Show Compressed Prompt", "Show Metrics"],
-            label="UI Options",
+        ui_settings = gr.CheckboxGroup(
+            ["Show Separate Context Field", "Show Compressed Prompt", "Show Metrics"],
+            label="UI Settings",
             value=["Show Metrics"],
+            elem_classes="ui-settings",
         )
-    prompt = gr.Textbox(label="Prompt (will not be compressed)", lines=1, max_lines=1, visible=False)
-    context = gr.Textbox(label="Prompt", lines=8, max_lines=8, elem_classes="word_count")
+    prompt = gr.Textbox(
+        label="Prompt (will not be compressed)", lines=1, max_lines=1, visible=False, elem_classes="question-target"
+    )
+    context = gr.Textbox(label="Prompt", lines=8, max_lines=8, elem_classes="word-count")
     rate = gr.Slider(0.1, 1, 0.5, step=0.05, label="Rate")
     target_model = gr.Radio(label="Target LLM Model", choices=LLM_MODELS, value=LLM_MODELS[0])
     with gr.Row():
@@ -156,8 +159,9 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
     # Examples
     gr.Markdown("## Examples (click to select)")
     qa_pairs = gr.Dataframe(
-        label="GPT-4 generated QA pairs related to the original prompt:",
+        label="GPT-4 generated QA pairs related to the selected example prompt:",
         headers=["Question", "Answer"],
+        elem_classes="qa-pairs",
         visible=False,
     )
     examples = gr.Dataset(
@@ -190,7 +194,7 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
             qa_pairs,
         ],
     )
-    ui_options.change(handle_ui_options, inputs=ui_options, outputs=[prompt, context, metrics, compressed])
+    ui_settings.change(handle_ui_options, inputs=ui_settings, outputs=[prompt, context, compressed, metrics])
     response_a.change(lambda x: update_label(x, response_a), inputs=response_a, outputs=response_a)
     response_b.change(lambda x: update_label(x, response_b), inputs=response_b, outputs=response_b)
     examples.select(
