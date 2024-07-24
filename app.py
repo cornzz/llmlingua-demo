@@ -16,7 +16,15 @@ from fastapi.responses import HTMLResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from llmlingua import PromptCompressor
 
-from utils import activate_button, create_llm_response, create_metrics_df, flatten, handle_ui_options, update_label
+from utils import (
+    activate_button,
+    create_llm_response,
+    create_metrics_df,
+    flatten,
+    handle_ui_options,
+    prepare_flagged_data,
+    update_label,
+)
 
 load_dotenv()
 
@@ -55,9 +63,9 @@ def get_flagged(credentials: Annotated[HTTPBasicCredentials, Depends(HTTPBasic()
             headers={"WWW-Authenticate": "Basic"},
         )
     if os.path.exists(FLAG_DIRECTORY + "/log.csv"):
-        data = pd.read_csv(FLAG_DIRECTORY + "/log.csv").iloc[::-1].to_html(index=False, table_id="table")
+        data = pd.read_csv(FLAG_DIRECTORY + "/log.csv")
         with open("flagged.html") as f:
-            return f.read().replace("{{ data }}", data)
+            return f.read().replace("{{ data }}", prepare_flagged_data(data))
 
 
 def call_llm_api(prompt: str, model: str, compressed: bool = False):
@@ -105,6 +113,7 @@ def run_demo(prompt: str, context: str, rate: float, target_model: str):
         f"{end_to_end_compressed:.2f}s ({end_to_end_original / end_to_end_compressed:.2f}x)"
     ]
     shuffle(responses)
+    responses[0][1], responses[1][1] = json.dumps(responses[0][1]), json.dumps(responses[1][1])
     return compressed, metrics, *flatten(responses)
 
 
@@ -156,7 +165,7 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
             response_b_obj = gr.Textbox(label="Response B", visible=False)
         with gr.Row():
             flag_a = gr.Button("A is better", interactive=False)
-            flag_ab = gr.Button("Neither is better", interactive=False)
+            flag_n = gr.Button("Neither is better", interactive=False)
             flag_b = gr.Button("B is better", interactive=False)
 
     # Examples
@@ -223,11 +232,11 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
     FLAG_COMPONENTS = [prompt, context, compressed, rate, metrics, response_a_obj, response_b_obj]
     flagging_callback.setup(FLAG_COMPONENTS, FLAG_DIRECTORY)
     response_a.change(activate_button, inputs=response_a, outputs=flag_a)
-    response_a.change(activate_button, inputs=response_a, outputs=flag_ab)
+    response_a.change(activate_button, inputs=response_a, outputs=flag_n)
     response_b.change(activate_button, inputs=response_b, outputs=flag_b)
-    flag_a.click(flag, inputs=FLAG_COMPONENTS + [flag_a], outputs=[flag_a, flag_ab, flag_b], preprocess=False)
-    flag_ab.click(flag, inputs=FLAG_COMPONENTS + [flag_ab], outputs=[flag_a, flag_ab, flag_b], preprocess=False)
-    flag_b.click(flag, inputs=FLAG_COMPONENTS + [flag_b], outputs=[flag_a, flag_ab, flag_b], preprocess=False)
+    flag_a.click(flag, inputs=FLAG_COMPONENTS + [flag_a], outputs=[flag_a, flag_n, flag_b], preprocess=False)
+    flag_n.click(flag, inputs=FLAG_COMPONENTS + [flag_n], outputs=[flag_a, flag_n, flag_b], preprocess=False)
+    flag_b.click(flag, inputs=FLAG_COMPONENTS + [flag_b], outputs=[flag_a, flag_n, flag_b], preprocess=False)
 
 
 app = gr.mount_gradio_app(app, demo, path="/")
