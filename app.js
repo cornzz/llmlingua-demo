@@ -14,18 +14,22 @@
     document.querySelectorAll('.word-count textarea').forEach((t) => t.addEventListener('input', wordCountHandler));
     // Question click handler
     const handleQuestionClick = (event) => {
-        document.querySelector('.question-target input').value = event.target.innerText;
         const promptCheckbox = document.querySelector('.ui-settings input');
         if (!promptCheckbox.checked) promptCheckbox.click();
+        const promptInput = document.querySelector('.question-target input');
+        promptInput.value = event.target.innerText;
+        const inputEvent = new Event("input");
+        Object.defineProperty(inputEvent, "target", { value: promptInput });
+        promptInput.dispatchEvent(inputEvent);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
             mutation.addedNodes.forEach((node) => {
-                if (node.nodeName === 'TR') node.querySelector('td span').addEventListener('click', handleQuestionClick)
+                if (node.nodeName === 'TR') node.querySelector('td span').addEventListener('click', handleQuestionClick);
             });
             mutation.removedNodes.forEach((node) => {
-                if (node.nodeName === 'TR') node.querySelector('td span').removeEventListener('click', handleQuestionClick)
+                if (node.nodeName === 'TR') node.querySelector('td span').removeEventListener('click', handleQuestionClick);
             });
         });
     });

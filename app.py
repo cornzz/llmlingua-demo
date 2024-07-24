@@ -86,11 +86,11 @@ def run_demo(prompt: str, context: str, rate: float, target_model: str):
     with ThreadPoolExecutor() as executor:
         start = time.time()
         future_original = executor.submit(
-            call_llm_api, "\n".join([prompt, context]) if prompt else context, target_model
+            call_llm_api, "\n\n".join([prompt, context]) if prompt else context, target_model
         )
         compressed, metrics, compression_time = compress_prompt(context, rate)
         responses = [
-            call_llm_api("\n".join([prompt, compressed]) if prompt else compressed, target_model, True),
+            call_llm_api("\n\n".join([prompt, compressed]) if prompt else compressed, target_model, True),
             future_original.result(),
         ]
         print(f"Processing time: {time.time() - start:.2f}s")
@@ -108,7 +108,7 @@ def run_demo(prompt: str, context: str, rate: float, target_model: str):
 
 with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
     gr.Markdown("# Prompt Compression A/B Test")
-    with gr.Accordion("About this demo:", open=False, elem_classes="accordion"):
+    with gr.Accordion("About this demo (please read):", open=False, elem_classes="accordion"):
         gr.Markdown(
             f"""
             Your prompt is sent to a target LLM model for completion, once uncompressed and once compressed using LLMLingua-2. Compare the responses and select the better one.
@@ -130,7 +130,7 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
     prompt = gr.Textbox(
         label="Prompt (will not be compressed)", lines=1, max_lines=1, visible=False, elem_classes="question-target"
     )
-    context = gr.Textbox(label="Prompt", lines=8, max_lines=8, elem_classes="word-count")
+    context = gr.Textbox(label="Prompt", lines=8, max_lines=8, autoscroll=False, elem_classes="word-count")
     rate = gr.Slider(0.1, 1, 0.5, step=0.05, label="Rate")
     target_model = gr.Radio(label="Target LLM Model", choices=LLM_MODELS, value=LLM_MODELS[0])
     with gr.Row():
