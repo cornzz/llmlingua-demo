@@ -64,14 +64,16 @@ def create_llm_response(response, compressed, error, start, end):
     return [get_message(response) if not error else response.text, obj]
 
 
+def metrics_to_df(metrics):
+    return pd.DataFrame(metrics["data"], columns=metrics["headers"])
+
+
 def prepare_flagged_data(data):
     data["Response A"] = data["Response A"].apply(json.loads)
     data["Response B"] = data["Response B"].apply(json.loads)
     data["flag"] = data.apply(
         lambda x: (
-            x["flag"]
-            if x["flag"] == "N"
-            else "Compressed" if x[f"Response {x['flag']}"]["compressed"] else "Uncompressed"
+            x["flag"] if x["flag"] == "N" else "Compr." if x[f"Response {x['flag']}"]["compressed"] else "Uncompr."
         ),
         axis=1,
     )
@@ -86,5 +88,8 @@ def prepare_flagged_data(data):
             axis=1,
         )
     )
-    data = data.rename(columns={"Response A": "Compressed", "Response B": "Uncompressed"})
-    return data.iloc[::-1].to_html(index=False, table_id="table")
+    data = data.rename(
+        columns={"Response A": "Compressed", "Response B": "Uncompressed", "username": "user", "timestamp": "time"}
+    )
+    data["Metrics"] = data["Metrics"].apply(lambda x: metrics_to_df(json.loads(x)))
+    return data.iloc[::-1].to_html(table_id="table")

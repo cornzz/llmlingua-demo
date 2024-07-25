@@ -5,15 +5,64 @@
     <title>Flagged Responses</title>
     <link href="https://cdn.jsdelivr.net/npm/simple-datatables@latest/dist/style.css" rel="stylesheet" type="text/css">
     <script src="https://cdn.jsdelivr.net/npm/simple-datatables@latest" type="text/javascript"></script>
+    <style>
+        .pointer {
+            cursor: pointer;
+        }
+
+        .tooltip {
+            display: none;
+            position: absolute;
+            z-index: 1;
+            background-color: white;
+            border: 1px solid black;
+            padding: 5px;
+            border-radius: 5px;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+            max-width: 600px;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+    </style>
 </head>
 
 <body style="width: 100%; height: 100%; margin: 0;">
     {{ data }}
     <script>
+        const tooltip = document.createElement('div');
+        tooltip.classList.add('tooltip');
+        document.body.appendChild(tooltip);
         const container = document.querySelector('#table');
+        const showTooltip = (event) => {
+            const cell = event.target.parentNode.cellIndex;
+            const row = event.target.parentNode.parentNode.dataset.index;
+            tooltip.innerHTML = dataTable.data.data[row].cells[cell].data;
+            tooltip.style.display = 'block';
+            tooltip.style.left = `${event.clientX + 10}px`;
+            tooltip.style.top = `${event.clientY + 10}px`;
+            const hideTooltip = (ev) => {
+                if (ev.target.classList.contains('pointer') || ev.target === tooltip) return;
+                tooltip.style.display = 'none';
+                window.removeEventListener('click', hideTooltip);
+            };
+            window.addEventListener('click', hideTooltip);
+        }
+        const overflow = (data, cap = 100) => {
+            if (data.length <= cap) return data;
+            return `<div class="pointer">${data.slice(0, cap)}...</div>`;
+        }
+        const registerClickHandler = () => {
+            document.querySelectorAll('.pointer').forEach((el) => el.addEventListener('click', showTooltip));
+        }
         const dataTable = new simpleDatatables.DataTable(container, {
-            
+            columns: [
+                ...[1, 2, 3, 5, 6, 7].map((i) => ({ select: i, type: 'string', render: (data) => overflow(data) })),
+                { select: 9, type: 'string', render: (data) => overflow(data, 5) },
+                { select: 10, type: 'string', render: (data) => data?.slice(5, -7) }
+            ]
         });
+        dataTable.on('datatable.page', registerClickHandler);
+        registerClickHandler();
     </script>
 </body>
 

@@ -93,6 +93,7 @@ def compress_prompt(prompt: str, rate: float):
 
 
 def run_demo(prompt: str, context: str, rate: float, target_model: str):
+    # TODO: allow selecting parallel / sequential processing
     with ThreadPoolExecutor() as executor:
         start = time.time()
         future_original = executor.submit(
