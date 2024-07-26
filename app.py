@@ -22,6 +22,7 @@ from utils import (
     create_metrics_df,
     flatten,
     handle_ui_options,
+    metrics_to_df,
     prepare_flagged_data,
     update_label,
 )
@@ -58,14 +59,29 @@ with open("data/examples.json") as f:
 def get_flagged(credentials: Annotated[HTTPBasicCredentials, Depends(HTTPBasic())]):
     if not FLAG_PASSWORD or credentials.password != FLAG_PASSWORD:
         raise HTTPException(
-            status_code=401,
-            detail="Invalid or missing credentials",
-            headers={"WWW-Authenticate": "Basic"},
+            status_code=401, detail="Invalid or missing credentials", headers={"WWW-Authenticate": "Basic"}
         )
     if os.path.exists(FLAG_DIRECTORY + "/log.csv"):
         data = pd.read_csv(FLAG_DIRECTORY + "/log.csv")
         with open("flagged.html") as f:
             return f.read().replace("{{ data }}", prepare_flagged_data(data))
+
+
+@app.get("/flagged/{index}")
+def get_flagged(index: int, credentials: Annotated[HTTPBasicCredentials, Depends(HTTPBasic())]):
+    if not FLAG_PASSWORD or credentials.password != FLAG_PASSWORD:
+        raise HTTPException(
+            status_code=401, detail="Invalid or missing credentials", headers={"WWW-Authenticate": "Basic"}
+        )
+    if os.path.exists(FLAG_DIRECTORY + "/log.csv"):
+        try:
+            data = pd.read_csv(FLAG_DIRECTORY + "/log.csv", skiprows=lambda x: x != 0 and x - 1 != index)
+            data["Metrics"] = data["Metrics"].apply(lambda x: metrics_to_df(json.loads(x)).to_dict(orient="records")[0])
+            data["Response A"] = data["Response A"].apply(json.loads)
+            data["Response B"] = data["Response B"].apply(json.loads)
+            return data.to_dict(orient="records")[0]
+        except pd.errors.EmptyDataError:
+            raise HTTPException(status_code=404, detail="Index out of range")
 
 
 def call_llm_api(prompt: str, model: str, compressed: bool = False):

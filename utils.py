@@ -73,7 +73,7 @@ def prepare_flagged_data(data):
     data["Response B"] = data["Response B"].apply(json.loads)
     data["flag"] = data.apply(
         lambda x: (
-            x["flag"] if x["flag"] == "N" else "Compr." if x[f"Response {x['flag']}"]["compressed"] else "Uncompr."
+            x["flag"] if x["flag"] == "N" else "Compressed" if x[f"Response {x['flag']}"]["compressed"] else "Uncompressed"
         ),
         axis=1,
     )
@@ -91,5 +91,5 @@ def prepare_flagged_data(data):
     data = data.rename(
         columns={"Response A": "Compressed", "Response B": "Uncompressed", "username": "user", "timestamp": "time"}
     )
-    data["Metrics"] = data["Metrics"].apply(lambda x: metrics_to_df(json.loads(x)))
+    data["Metrics"] = data["Metrics"].apply(lambda x: metrics_to_df(json.loads(x)).to_html(index=False))
     return data.iloc[::-1].to_html(table_id="table")
