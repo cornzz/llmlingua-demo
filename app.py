@@ -224,6 +224,7 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
         ],
     )
     ui_settings.change(handle_ui_options, inputs=ui_settings, outputs=[prompt, context, compressed, metrics])
+    compressed.change(lambda x: update_label(x, compressed), inputs=compressed, outputs=compressed)
     response_a.change(lambda x: update_label(x, response_a), inputs=response_a, outputs=response_a)
     response_b.change(lambda x: update_label(x, response_b), inputs=response_b, outputs=response_b)
     examples.select(

@@ -9,9 +9,16 @@
     const wordCountHandler = (event) => {
         const words = event.target.value.match(/\w+/g)?.length ?? 0;
         const label = event.target.previousElementSibling;
-        label.innerText = label.innerText.split(' (')[0] + ` (${words} words)`;
+        label.innerText = label.innerText.split(' (')[0] + (words ? ` (${words} words)` : '');
     }
-    document.querySelectorAll('.word-count textarea').forEach((t) => t.addEventListener('input', wordCountHandler));
+    const wordCountFields = document.querySelectorAll('.word-count textarea');
+    wordCountFields.forEach((t) => t.addEventListener('input', wordCountHandler));
+    // Add listener to example prompt buttons to set wordcount on selection
+    document.querySelectorAll('.gallery .gallery-item').forEach((item) => {
+        item.addEventListener('click', () => setTimeout(() => {
+            wordCountFields.forEach((t) => wordCountHandler({ target: t }))
+        }, 300));
+    });
     // Question click handler
     const handleQuestionClick = (event) => {
         const promptCheckbox = document.querySelector('.ui-settings input');

@@ -36,7 +36,9 @@ def handle_ui_options(value: list[str]):
 
 
 def update_label(content: str, textbox: gr.Textbox):
-    return gr.Textbox(label=textbox.label.split(" (")[0] + f" ({len(content.split())} words)")
+    words = len(content.split())
+    new_label = textbox.label.split(" (")[0] + (f" ({words} words)" if words else "")
+    return gr.Textbox(label=new_label, value=content)
 
 
 def flatten(xss):
@@ -73,7 +75,9 @@ def prepare_flagged_data(data):
     data["Response B"] = data["Response B"].apply(json.loads)
     data["flag"] = data.apply(
         lambda x: (
-            x["flag"] if x["flag"] == "N" else "Compressed" if x[f"Response {x['flag']}"]["compressed"] else "Uncompressed"
+            x["flag"]
+            if x["flag"] == "N"
+            else "Compressed" if x[f"Response {x['flag']}"]["compressed"] else "Uncompressed"
         ),
         axis=1,
     )
