@@ -162,7 +162,7 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
     rate = gr.Slider(0.1, 1, 0.5, step=0.05, label="Rate")
     target_model = gr.Radio(label="Target LLM Model", choices=LLM_MODELS, value=LLM_MODELS[0])
     with gr.Row():
-        clear = gr.Button("Clear")
+        clear = gr.Button("Clear", elem_classes="clear")
         submit = gr.Button("Submit", variant="primary", interactive=False)
 
     compressed = gr.Textbox(label="Compressed Prompt", visible=False, interactive=False)

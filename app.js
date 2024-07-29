@@ -14,7 +14,7 @@
     const wordCountFields = document.querySelectorAll('.word-count textarea');
     wordCountFields.forEach((t) => t.addEventListener('input', wordCountHandler));
     // Add listener to example prompt buttons to set wordcount on selection
-    document.querySelectorAll('.gallery .gallery-item').forEach((item) => {
+    document.querySelectorAll('.gallery .gallery-item, button.clear').forEach((item) => {
         item.addEventListener('click', () => setTimeout(() => {
             wordCountFields.forEach((t) => wordCountHandler({ target: t }))
         }, 300));
