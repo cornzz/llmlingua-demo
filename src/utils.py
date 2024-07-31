@@ -1,7 +1,9 @@
 import json
+from secrets import compare_digest
 
 import gradio as gr
 import pandas as pd
+from fastapi import HTTPException
 
 
 def create_metrics_df(result=None):
@@ -97,3 +99,10 @@ def prepare_flagged_data(data):
     )
     data["Metrics"] = data["Metrics"].apply(lambda x: metrics_to_df(json.loads(x)).to_html(index=False))
     return data.iloc[::-1].to_html(table_id="table")
+
+
+def check_password(submitted, password):
+    if not (password and compare_digest(submitted.encode("utf8"), password.encode("utf8"))):
+        raise HTTPException(
+            status_code=401, detail="Invalid or missing credentials", headers={"WWW-Authenticate": "Basic"}
+        )

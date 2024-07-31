@@ -11,13 +11,14 @@ import pandas as pd
 import requests
 import torch
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from llmlingua import PromptCompressor
 
 from .utils import (
     activate_button,
+    check_password,
     create_llm_response,
     create_metrics_df,
     flatten,
@@ -59,10 +60,7 @@ with open(os.path.join(BASE_DIR, "../data/examples.json")) as f:
 
 @app.get("/flagged", response_class=HTMLResponse)
 def get_flagged(credentials: Annotated[HTTPBasicCredentials, Depends(HTTPBasic())]):
-    if not FLAG_PASSWORD or credentials.password != FLAG_PASSWORD:
-        raise HTTPException(
-            status_code=401, detail="Invalid or missing credentials", headers={"WWW-Authenticate": "Basic"}
-        )
+    check_password(credentials.password, FLAG_PASSWORD)
     if os.path.exists(FLAG_DIRECTORY + "/log.csv"):
         data = pd.read_csv(FLAG_DIRECTORY + "/log.csv")
         with open(os.path.join(BASE_DIR, "flagged.html")) as f:
@@ -71,10 +69,7 @@ def get_flagged(credentials: Annotated[HTTPBasicCredentials, Depends(HTTPBasic()
 
 @app.get("/flagged/{index}")
 def get_flagged(index: int, credentials: Annotated[HTTPBasicCredentials, Depends(HTTPBasic())]):
-    if not FLAG_PASSWORD or credentials.password != FLAG_PASSWORD:
-        raise HTTPException(
-            status_code=401, detail="Invalid or missing credentials", headers={"WWW-Authenticate": "Basic"}
-        )
+    check_password(credentials.password, FLAG_PASSWORD)
     if os.path.exists(FLAG_DIRECTORY + "/log.csv"):
         try:
             data = pd.read_csv(FLAG_DIRECTORY + "/log.csv", skiprows=lambda x: x != 0 and x - 1 != index)
