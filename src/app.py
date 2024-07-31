@@ -32,7 +32,7 @@ load_dotenv()
 
 LLM_ENDPOINT = os.getenv("LLM_ENDPOINT")
 LLM_TOKEN = os.getenv("LLM_TOKEN")
-LLM_MODELS = ["meta-llama/Meta-Llama-3-70B-Instruct", "mistral-7b-q4", "CohereForAI/c4ai-command-r-plus"]
+LLM_MODELS = ["meta-llama/Meta-Llama-3.1-70B-Instruct", "mistral-7b-q4", "CohereForAI/c4ai-command-r-plus"]
 MPS_AVAILABLE = torch.backends.mps.is_available()
 CUDA_AVAILABLE = torch.cuda.is_available()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
