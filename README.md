@@ -18,14 +18,15 @@ FLAG_PASSWORD=very_secret
 ## Deployment
 ```
 source venv/bin/activate
-uvicorn app:app --host 0.0.0.0 --port 80 --log-level warning
+uvicorn src.app:app --host 0.0.0.0 --port 80 --log-level warning
 ```
 
 ## Development
 ```
 source venv/bin/activate
-uvicorn app:app --reload --log-level warning
+uvicorn src.app:app --reload --log-level warning
 ```
+The demo is now reachable under http://localhost:8000
 
 ## Inspecting flagged data
 Navigate to `/flagged` and enter the password set in `.env`

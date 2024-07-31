@@ -16,7 +16,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from llmlingua import PromptCompressor
 
-from utils import (
+from .utils import (
     activate_button,
     create_llm_response,
     create_metrics_df,
@@ -34,11 +34,12 @@ LLM_TOKEN = os.getenv("LLM_TOKEN")
 LLM_MODELS = ["meta-llama/Meta-Llama-3-70B-Instruct", "mistral-7b-q4", "CohereForAI/c4ai-command-r-plus"]
 MPS_AVAILABLE = torch.backends.mps.is_available()
 CUDA_AVAILABLE = torch.cuda.is_available()
-FLAG_DIRECTORY = "flagged"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FLAG_DIRECTORY = os.path.join(BASE_DIR, "../flagged")
 FLAG_PASSWORD = os.getenv("FLAG_PASSWORD")
-with open("app.js") as f:
+with open(os.path.join(BASE_DIR, "app.js")) as f:
     JS = f.read()
-with open("app.css") as f:
+with open(os.path.join(BASE_DIR, "app.css")) as f:
     CSS = f.read()
 
 if not LLM_ENDPOINT:
@@ -52,7 +53,7 @@ llm_lingua = PromptCompressor(
     device_map="mps" if MPS_AVAILABLE else "cuda" if CUDA_AVAILABLE else "cpu",
 )
 flagging_callback = gr.CSVLogger()
-with open("data/examples.json") as f:
+with open(os.path.join(BASE_DIR, "../data/examples.json")) as f:
     example_dataset = json.load(f)
 
 
@@ -64,7 +65,7 @@ def get_flagged(credentials: Annotated[HTTPBasicCredentials, Depends(HTTPBasic()
         )
     if os.path.exists(FLAG_DIRECTORY + "/log.csv"):
         data = pd.read_csv(FLAG_DIRECTORY + "/log.csv")
-        with open("flagged.html") as f:
+        with open(os.path.join(BASE_DIR, "flagged.html")) as f:
             return f.read().replace("{{ data }}", prepare_flagged_data(data))
 
 
