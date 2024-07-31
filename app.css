@@ -10,3 +10,7 @@
 .gallery-item {
     max-height: 100px;
 }
+
+.word-count span::after {
+    content: var(--word-count);
+}

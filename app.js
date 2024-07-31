@@ -9,7 +9,7 @@
     const wordCountHandler = (event) => {
         const words = event.target.value.match(/\w+/g)?.length ?? 0;
         const label = event.target.previousElementSibling;
-        label.innerText = label.innerText.split(' (')[0] + (words ? ` (${words} words)` : '');
+        label.style = words ? `--word-count: " (${words} words)"` : '';
     }
     const wordCountFields = document.querySelectorAll('.word-count textarea');
     wordCountFields.forEach((t) => t.addEventListener('input', wordCountHandler));
