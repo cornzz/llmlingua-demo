@@ -11,6 +11,7 @@ pip install -r requirements.txt
 - Create `.env` file:
 ```
 LLM_ENDPOINT=https://llm.example.com/v1/chat/completions
+LLM_TOKEN=qwerty12345
 FLAG_PASSWORD=very_secret
 ```
 
