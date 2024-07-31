@@ -153,13 +153,13 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
         ui_settings = gr.CheckboxGroup(
             ["Show Separate Context Field", "Show Compressed Prompt", "Show Metrics"],
             label="UI Settings",
-            value=["Show Metrics"],
+            value=["Show Separate Context Field", "Show Metrics"],
             elem_classes="ui-settings",
         )
     prompt = gr.Textbox(
-        label="Prompt (will not be compressed)", lines=1, max_lines=1, visible=False, elem_classes="question-target"
+        label="Question (optional, will not be compressed)", lines=1, max_lines=1, elem_classes="question-target"
     )
-    context = gr.Textbox(label="Prompt", lines=8, max_lines=8, autoscroll=False, elem_classes="word-count")
+    context = gr.Textbox(label="Context", lines=8, max_lines=8, autoscroll=False, elem_classes="word-count")
     rate = gr.Slider(0.1, 1, 0.5, step=0.05, label="Rate")
     target_model = gr.Radio(label="Target LLM Model", choices=LLM_MODELS, value=LLM_MODELS[0])
     with gr.Row():
