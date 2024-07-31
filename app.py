@@ -30,6 +30,7 @@ from utils import (
 load_dotenv()
 
 LLM_ENDPOINT = os.getenv("LLM_ENDPOINT")
+LLM_TOKEN = os.getenv("LLM_TOKEN")
 LLM_MODELS = ["meta-llama/Meta-Llama-3-70B-Instruct", "mistral-7b-q4", "CohereForAI/c4ai-command-r-plus"]
 MPS_AVAILABLE = torch.backends.mps.is_available()
 CUDA_AVAILABLE = torch.cuda.is_available()
@@ -85,7 +86,7 @@ def get_flagged(index: int, credentials: Annotated[HTTPBasicCredentials, Depends
 
 
 def call_llm_api(prompt: str, model: str, compressed: bool = False):
-    headers = {"Content-Type": "application/json", "Authorization": "Bearer no-key"}
+    headers = {"Content-Type": "application/json", "Authorization": f"Bearer {LLM_TOKEN or 'no-key'}"}
     data = json.dumps(
         {
             "model": model,
