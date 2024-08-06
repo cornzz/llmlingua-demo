@@ -1,4 +1,5 @@
 # LLMLingua-2 Prompt Compression Demo
+Dependencies: `gradio`, `llmlingua`, `python-dotenv`
 
 ## Installation
 - Install Python

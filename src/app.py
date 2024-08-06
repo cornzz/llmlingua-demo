@@ -135,6 +135,8 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
     gr.Markdown("# Prompt Compression A/B Test")
     with gr.Accordion("About this demo (please read):", open=False, elem_classes="accordion"):
         gr.Markdown(
+            # TODO: include note that token count may be inaccurate due to different tokenization methods
+            # TODO: include info which GPU used
             f"""
             Your prompt is sent to a target LLM model for completion, once uncompressed and once compressed using LLMLingua-2. Compare the responses and select the better one.
             Notes:
