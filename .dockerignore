@@ -1,0 +1,7 @@
+.git
+.gitattributes
+.gitignore
+.github/
+Dockerfile
+*.md
+kubernetes/
