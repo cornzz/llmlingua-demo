@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llmlingua-demo
+  namespace: cornelius-ns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: llmlingua-demo
+  template:
+    metadata:
+      labels:
+        app: llmlingua-demo
+    spec:
+      containers:
+      - name: llmlingua-demo
+        image: ghcr.io/cornzz/llmlingua-demo:main
+        imagePullPolicy: Always
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+            cpu: 12
+            memory: 32Gi
+        env:
+          - name: LLM_ENDPOINT
+            valueFrom:
+              secretKeyRef:
+                name: llmlingua-demo-secrets
+                key: LLM_ENDPOINT
+          - name: LLM_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: llmlingua-demo-secrets
+                key: LLM_TOKEN
+          - name: FLAG_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: llmlingua-demo-secrets
+                key: FLAG_PASSWORD
