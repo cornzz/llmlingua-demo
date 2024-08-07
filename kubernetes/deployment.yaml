@@ -22,6 +22,10 @@ spec:
             nvidia.com/gpu: 1
             cpu: 12
             memory: 32Gi
+          requests:
+            nvidia.com/gpu: 1
+            cpu: 500m
+            memory: 500Mi
         env:
           - name: LLM_ENDPOINT
             valueFrom:
