@@ -5,9 +5,10 @@ from secrets import compare_digest
 import gradio as gr
 import pandas as pd
 from fastapi import HTTPException
+from requests import Response
 
 
-def create_metrics_df(result=None):
+def create_metrics_df(result: dict = None):
     df = pd.DataFrame(
         {
             "Original / Compressed": (
@@ -44,20 +45,20 @@ def update_label(content: str, textbox: gr.Textbox):
     return gr.Textbox(label=new_label, value=content)
 
 
-def shuffle_and_flatten(original, compressed):
+def shuffle_and_flatten(original: dict[str, object], compressed: dict[str, object]):
     responses = [original, compressed]
     shuffle(responses)
     return [x for xs in responses for x in xs.values()]
 
 
-def get_message(response):
+def get_message(response: dict):
     if "choices" in response:
         return response["choices"][0]["message"]["content"]
     else:
         return f'{response["status"]} - {response["error"]}'
 
 
-def create_llm_response(response, compressed, error, start, end):
+def create_llm_response(response: Response, compressed: bool, error: bool, start: float, end: float):
     if not error:
         response = response.json()
     obj = {
@@ -71,11 +72,11 @@ def create_llm_response(response, compressed, error, start, end):
     return {"text": get_message(response) if not error else response.text, "obj": obj}
 
 
-def metrics_to_df(metrics):
+def metrics_to_df(metrics: dict):
     return pd.DataFrame(metrics["data"], columns=metrics["headers"])
 
 
-def prepare_flagged_data(data):
+def prepare_flagged_data(data: pd.DataFrame):
     data["Response A"] = data["Response A"].apply(json.loads)
     data["Response B"] = data["Response B"].apply(json.loads)
     data["flag"] = data.apply(
@@ -104,7 +105,7 @@ def prepare_flagged_data(data):
     return data.iloc[::-1].to_html(table_id="table")
 
 
-def check_password(submitted, password):
+def check_password(submitted: str, password: str):
     if not (password and compare_digest(submitted.encode("utf8"), password.encode("utf8"))):
         raise HTTPException(
             status_code=401, detail="Invalid or missing credentials", headers={"WWW-Authenticate": "Basic"}
