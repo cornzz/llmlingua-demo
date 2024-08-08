@@ -8,6 +8,12 @@
     <script src="https://cdn.jsdelivr.net/npm/@floating-ui/core@1.6.4"></script>
     <script src="https://cdn.jsdelivr.net/npm/@floating-ui/dom@1.6.7"></script>
     <style>
+        #download button {
+            padding: 0.5em;
+            margin: 0 1em;
+            cursor: pointer;
+        }
+
         .pointer,
         .metrics {
             cursor: pointer;
@@ -48,6 +54,7 @@
 </head>
 
 <body style="width: 100%; height: 100%; margin: 0;">
+    <a href="/flagged/download" id="download"><button>Export</button></a>
     {{ data }}
     <div class="tooltip-container">
         <div id="tooltip"></div>
@@ -89,6 +96,9 @@
             document.querySelectorAll('.pointer, .metrics').forEach((el) => el.addEventListener('click', showTooltip));
         }
         dataTable.on('datatable.page', registerClickHandler);
+        dataTable.on('datatable.init', () => {
+            document.querySelector('.datatable-dropdown').insertAdjacentElement('afterend', document.getElementById('download'))
+        })
         registerClickHandler();
     </script>
 </body>
