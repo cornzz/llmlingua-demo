@@ -11,7 +11,7 @@ import requests
 import torch
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from llmlingua import PromptCompressor
 
@@ -67,21 +67,27 @@ def get_flagged(credentials: Annotated[HTTPBasicCredentials, Depends(HTTPBasic()
             return f.read().replace("{{ data }}", data)
 
 
+@app.get("/flagged/download")
+def download_flagged(credentials: Annotated[HTTPBasicCredentials, Depends(HTTPBasic())]):
+    check_password(credentials.password, FLAG_PASSWORD)
+    if os.path.exists(FLAG_DIRECTORY + "/log.csv"):
+        return FileResponse(path=FLAG_DIRECTORY + "/log.csv", filename="flagged.csv", media_type="text/csv")
+
+
 @app.get("/flagged/{index}")
 def get_flagged(index: int, credentials: Annotated[HTTPBasicCredentials, Depends(HTTPBasic())]):
     check_password(credentials.password, FLAG_PASSWORD)
     if os.path.exists(FLAG_DIRECTORY + "/log.csv"):
         try:
-            data = pd.read_csv(FLAG_DIRECTORY + "/log.csv", skiprows=lambda x: x != 0 and x - 1 != index, na_filter=False)
+            data = pd.read_csv(
+                FLAG_DIRECTORY + "/log.csv", skiprows=lambda x: x != 0 and x - 1 != index, na_filter=False
+            )
             data["Metrics"] = data["Metrics"].apply(lambda x: metrics_to_df(json.loads(x)).to_dict(orient="records")[0])
             data["Response A"] = data["Response A"].apply(json.loads)
             data["Response B"] = data["Response B"].apply(json.loads)
             return data.to_dict(orient="records")[0]
-        except pd.errors.EmptyDataError:
+        except Exception:
             raise HTTPException(status_code=404, detail="Index out of range")
-
-
-# TODO: add download route for flagged data
 
 
 def call_llm_api(prompt: str, model: str, compressed: bool = False):
