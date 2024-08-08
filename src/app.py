@@ -62,7 +62,7 @@ with open(os.path.join(BASE_DIR, "../data/examples.json")) as f:
 def get_flagged(credentials: Annotated[HTTPBasicCredentials, Depends(HTTPBasic())]):
     check_password(credentials.password, FLAG_PASSWORD)
     if os.path.exists(FLAG_DIRECTORY + "/log.csv"):
-        data = pd.read_csv(FLAG_DIRECTORY + "/log.csv")
+        data = pd.read_csv(FLAG_DIRECTORY + "/log.csv", na_filter=False)
         with open(os.path.join(BASE_DIR, "flagged.html")) as f:
             return f.read().replace("{{ data }}", prepare_flagged_data(data))
 
