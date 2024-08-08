@@ -26,6 +26,9 @@ spec:
             nvidia.com/gpu: 1
             cpu: 500m
             memory: 500Mi
+        volumeMounts:
+        - name: flagged-data
+          mountPath: /demo/flagged
         env:
           - name: LLM_ENDPOINT
             valueFrom:
@@ -42,3 +45,7 @@ spec:
               secretKeyRef:
                 name: llmlingua-demo-secrets
                 key: FLAG_PASSWORD
+      volumes:
+      - name: flagged-data
+        persistentVolumeClaim:
+          claimName: llmlingua-demo-data
