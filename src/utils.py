@@ -1,4 +1,5 @@
 import json
+from random import shuffle
 from secrets import compare_digest
 
 import gradio as gr
@@ -43,8 +44,10 @@ def update_label(content: str, textbox: gr.Textbox):
     return gr.Textbox(label=new_label, value=content)
 
 
-def flatten(xss):
-    return [x for xs in xss for x in xs]
+def shuffle_and_flatten(original, compressed):
+    responses = [original, compressed]
+    shuffle(responses)
+    return [x for xs in responses for x in xs.values()]
 
 
 def get_message(response):
@@ -65,7 +68,7 @@ def create_llm_response(response, compressed, error, start, end):
     }
     if not error:
         obj.update(response)
-    return [get_message(response) if not error else response.text, obj]
+    return {"text": get_message(response) if not error else response.text, "obj": obj}
 
 
 def metrics_to_df(metrics):

@@ -3,7 +3,6 @@ import os
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
-from random import shuffle
 from typing import Annotated
 
 import gradio as gr
@@ -21,10 +20,10 @@ from .utils import (
     check_password,
     create_llm_response,
     create_metrics_df,
-    flatten,
     handle_ui_options,
     metrics_to_df,
     prepare_flagged_data,
+    shuffle_and_flatten,
     update_label,
 )
 
@@ -82,6 +81,9 @@ def get_flagged(index: int, credentials: Annotated[HTTPBasicCredentials, Depends
             raise HTTPException(status_code=404, detail="Index out of range")
 
 
+# TODO: add download route for flagged data
+
+
 def call_llm_api(prompt: str, model: str, compressed: bool = False):
     headers = {"Content-Type": "application/json", "Authorization": f"Bearer {LLM_TOKEN or 'no-key'}"}
     data = json.dumps(
@@ -107,29 +109,26 @@ def compress_prompt(prompt: str, rate: float):
 
 
 def run_demo(prompt: str, context: str, rate: float, target_model: str):
-    # TODO: allow selecting parallel / sequential processing
+    # TODO: allow selecting parallel / sequential processing (?)
     with ThreadPoolExecutor() as executor:
         start = time.time()
         future_original = executor.submit(
             call_llm_api, "\n\n".join([prompt, context]) if prompt else context, target_model
         )
         compressed, metrics, compression_time = compress_prompt(context, rate)
-        responses = [
-            call_llm_api("\n\n".join([prompt, compressed]) if prompt else compressed, target_model, True),
-            future_original.result(),
-        ]
+        res_compressed = call_llm_api("\n\n".join([prompt, compressed]) if prompt else compressed, target_model, True)
+        res_original = future_original.result()
         print(f"Processing time: {time.time() - start:.2f}s")
 
-    end_to_end_original = responses[1][1]["call_time"]
-    end_to_end_compressed = responses[0][1]["call_time"] + compression_time
+    end_to_end_original = res_original["obj"]["call_time"]
+    end_to_end_compressed = res_compressed["obj"]["call_time"] + compression_time
     metrics["Compression"] = [f"{compression_time:.2f}s"]
     metrics["End-to-end Latency"] = [f"{end_to_end_original:.2f}s"]
     metrics["End-to-end Latency Compressed (Speedup)"] = [
         f"{end_to_end_compressed:.2f}s ({end_to_end_original / end_to_end_compressed:.2f}x)"
     ]
-    shuffle(responses)
-    responses[0][1], responses[1][1] = json.dumps(responses[0][1]), json.dumps(responses[1][1])
-    return compressed, metrics, *flatten(responses)
+    res_original["obj"], res_compressed["obj"] = json.dumps(res_original["obj"]), json.dumps(res_compressed["obj"])
+    return compressed, metrics, *shuffle_and_flatten(res_original, res_compressed)
 
 
 with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
@@ -147,12 +146,15 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
             - Submitted data is logged if you flag a response (i.e. click on one of the \"x is better\" buttons) and may be used for research purposes.
         """
         )
+        # TODO: add 'compress only' option
         ui_settings = gr.CheckboxGroup(
             ["Show Separate Context Field", "Show Compressed Prompt", "Show Metrics"],
             label="UI Settings",
             value=["Show Separate Context Field", "Show Metrics"],
             elem_classes="ui-settings",
         )
+
+    # Inputs
     prompt = gr.Textbox(
         label="Question (optional, will not be compressed)", lines=1, max_lines=1, elem_classes="question-target"
     )
@@ -163,6 +165,7 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
         clear = gr.Button("Clear", elem_classes="clear")
         submit = gr.Button("Submit", variant="primary", interactive=False)
 
+    # Outputs
     compressed = gr.Textbox(label="Compressed Prompt", visible=False, interactive=False)
     metrics = gr.Dataframe(
         label="Metrics",
@@ -174,6 +177,7 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
     )
     with gr.Column(variant="panel"):
         with gr.Row():
+            # TODO: use state instead of invisible textboxes
             response_a = gr.Textbox(label="LLM Response A", lines=10, max_lines=10, autoscroll=False, interactive=False)
             response_a_obj = gr.Textbox(label="Response A", visible=False)
             response_b = gr.Textbox(label="LLM Response B", lines=10, max_lines=10, autoscroll=False, interactive=False)
@@ -198,7 +202,7 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
         type="index",
     )
 
-    # Event handling
+    # Event handlers
     prompt.change(activate_button, inputs=[prompt, context], outputs=submit)
     context.change(activate_button, inputs=[prompt, context], outputs=submit)
     submit.click(
