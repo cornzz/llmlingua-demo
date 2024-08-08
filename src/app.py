@@ -62,9 +62,9 @@ with open(os.path.join(BASE_DIR, "../data/examples.json")) as f:
 def get_flagged(credentials: Annotated[HTTPBasicCredentials, Depends(HTTPBasic())]):
     check_password(credentials.password, FLAG_PASSWORD)
     if os.path.exists(FLAG_DIRECTORY + "/log.csv"):
-        data = pd.read_csv(FLAG_DIRECTORY + "/log.csv", na_filter=False)
+        data = prepare_flagged_data(pd.read_csv(FLAG_DIRECTORY + "/log.csv", na_filter=False))
         with open(os.path.join(BASE_DIR, "flagged.html")) as f:
-            return f.read().replace("{{ data }}", prepare_flagged_data(data))
+            return f.read().replace("{{ data }}", data)
 
 
 @app.get("/flagged/{index}")
@@ -72,7 +72,7 @@ def get_flagged(index: int, credentials: Annotated[HTTPBasicCredentials, Depends
     check_password(credentials.password, FLAG_PASSWORD)
     if os.path.exists(FLAG_DIRECTORY + "/log.csv"):
         try:
-            data = pd.read_csv(FLAG_DIRECTORY + "/log.csv", skiprows=lambda x: x != 0 and x - 1 != index)
+            data = pd.read_csv(FLAG_DIRECTORY + "/log.csv", skiprows=lambda x: x != 0 and x - 1 != index, na_filter=False)
             data["Metrics"] = data["Metrics"].apply(lambda x: metrics_to_df(json.loads(x)).to_dict(orient="records")[0])
             data["Response A"] = data["Response A"].apply(json.loads)
             data["Response B"] = data["Response B"].apply(json.loads)
