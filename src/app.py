@@ -12,7 +12,7 @@ import requests
 import torch
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, PlainTextResponse, StreamingResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from llmlingua import PromptCompressor
 
@@ -26,6 +26,7 @@ from .utils import (
     metrics_to_df,
     prepare_flagged_data,
     shuffle_and_flatten,
+    stream_file,
     update_label,
 )
 
@@ -103,6 +104,13 @@ def get_flagged(index: int, credentials: Annotated[HTTPBasicCredentials, Depends
             return data.to_dict(orient="records")[0]
         except Exception:
             raise HTTPException(status_code=404, detail="Index out of range")
+
+
+@app.get("/logs")
+def get_logs(credentials: Annotated[HTTPBasicCredentials, Depends(HTTPBasic())]):
+    check_password(credentials.password, FLAG_PASSWORD)
+    if os.path.exists(LOG_DIRECTORY + "/monitor.log"):
+        return StreamingResponse(stream_file(os.path.join(LOG_DIRECTORY, "monitor.log")), media_type="text/plain")
 
 
 def call_llm_api(prompt: str, model: str, compressed: bool = False):

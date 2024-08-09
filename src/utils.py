@@ -113,3 +113,9 @@ def check_password(submitted: str, password: str):
         raise HTTPException(
             status_code=401, detail="Invalid or missing credentials", headers={"WWW-Authenticate": "Basic"}
         )
+
+
+def stream_file(file_path, chunk_size=4096):
+    with open(file_path, "rb") as f:
+        while chunk := f.read(chunk_size):
+            yield chunk
