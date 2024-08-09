@@ -11,10 +11,10 @@
     max-height: 100px;
 }
 
-.word-count span::after {
+.word-count label span::after {
     content: var(--word-count);
 }
 
-.question-target span::after {
+.question-target label span::after {
     content: " (optional, will not be compressed)";
 }

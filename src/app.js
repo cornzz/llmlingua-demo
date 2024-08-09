@@ -20,9 +20,12 @@
             wordCountFields.forEach((t) => wordCountHandler({ target: t }))
         }, 300));
     });
+    const ui_settings = document.querySelectorAll('.ui-settings input');
+    // Show compressed prompt if "compress only" is checked
+    ui_settings[3].addEventListener('change', (event) => event.target.checked && !ui_settings[1].checked && ui_settings[1].click());
     // Question click handler
     const handleQuestionClick = (event) => {
-        const promptCheckbox = document.querySelector('.ui-settings input');
+        const promptCheckbox = ui_settings[0];
         if (!promptCheckbox.checked) promptCheckbox.click();
         const promptInput = document.querySelector('.question-target input');
         promptInput.value = event.target.innerText;

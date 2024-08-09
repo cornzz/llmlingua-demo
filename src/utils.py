@@ -36,6 +36,7 @@ def handle_ui_options(value: list[str]):
         gr.Textbox(label="Context" if show_prompt else "Prompt"),
         gr.Textbox(visible="Show Compressed Prompt" in value),
         gr.DataFrame(visible="Show Metrics" in value),
+        gr.Column(visible="Compress only" not in value),
     )
 
 
