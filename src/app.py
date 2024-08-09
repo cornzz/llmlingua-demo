@@ -40,7 +40,7 @@ CUDA_AVAILABLE = torch.cuda.is_available()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FLAG_DIRECTORY = os.path.join(BASE_DIR, "../flagged")
 FLAG_PASSWORD = os.getenv("FLAG_PASSWORD")
-LOG_DIRECTORY = os.path.join(BASE_DIR, "../logs")
+LOG_DIRECTORY = os.path.join(FLAG_DIRECTORY, "logs")
 with open(os.path.join(BASE_DIR, "app.js")) as f:
     JS = f.read()
 with open(os.path.join(BASE_DIR, "app.css")) as f:
