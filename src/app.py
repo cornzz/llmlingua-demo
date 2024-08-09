@@ -142,7 +142,7 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
     with gr.Accordion("About this demo (please read):", open=False, elem_classes="accordion"):
         gr.Markdown(
             f"""
-            Your prompt is sent to a target LLM model for completion, both in its uncompressed form and compressed using LLMLingua-2. Evaluate the responses and select the better one.
+            Your prompt is sent to a target LLM for completion, both in its uncompressed form and compressed using LLMLingua-2. Evaluate the responses and select the better one.
             Notes:
             - The order of the responses (compressed / uncompressed prompt) is randomized.
             - Compression time is included in the compressed end-to-end latency. {'Compression is done on a CPU. Using a GPU would be faster.' if not (MPS_AVAILABLE or CUDA_AVAILABLE) else 'Compression is done on a GPU using MPS.' if MPS_AVAILABLE else f'Compression is done on a GPU ({torch.cuda.get_device_name()}).'}
@@ -152,7 +152,7 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
             - Submitted data is logged if you flag a response (i.e. click on one of the \"x is better\" buttons) and may be used for research purposes.
         """
         )
-        # TODO: add 'compress only' option
+        # TODO: add option to only compress
         ui_settings = gr.CheckboxGroup(
             ["Show Separate Context Field", "Show Compressed Prompt", "Show Metrics"],
             label="UI Settings",
@@ -235,6 +235,9 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
     compressed.change(lambda x: update_label(x, compressed), inputs=compressed, outputs=compressed)
     response_a.change(lambda x: update_label(x, response_a), inputs=response_a, outputs=response_a)
     response_b.change(lambda x: update_label(x, response_b), inputs=response_b, outputs=response_b)
+    response_a.change(activate_button, inputs=response_a, outputs=flag_a)
+    response_a.change(activate_button, inputs=response_a, outputs=flag_n)
+    response_b.change(activate_button, inputs=response_b, outputs=flag_b)
     examples.select(
         lambda idx: (
             None,
@@ -258,9 +261,6 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
 
     FLAG_COMPONENTS = [prompt, context, compressed, rate, metrics, response_a_obj, response_b_obj]
     flagging_callback.setup(FLAG_COMPONENTS, FLAG_DIRECTORY)
-    response_a.change(activate_button, inputs=response_a, outputs=flag_a)
-    response_a.change(activate_button, inputs=response_a, outputs=flag_n)
-    response_b.change(activate_button, inputs=response_b, outputs=flag_b)
     flag_a.click(flag, inputs=FLAG_COMPONENTS + [flag_a], outputs=[flag_a, flag_n, flag_b], preprocess=False)
     flag_n.click(flag, inputs=FLAG_COMPONENTS + [flag_n], outputs=[flag_a, flag_n, flag_b], preprocess=False)
     flag_b.click(flag, inputs=FLAG_COMPONENTS + [flag_b], outputs=[flag_a, flag_n, flag_b], preprocess=False)
