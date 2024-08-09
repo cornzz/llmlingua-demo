@@ -14,3 +14,7 @@
 .word-count span::after {
     content: var(--word-count);
 }
+
+.question-target span::after {
+    content: " (optional, will not be compressed)";
+}

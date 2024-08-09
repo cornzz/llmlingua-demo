@@ -74,6 +74,17 @@ def download_flagged(credentials: Annotated[HTTPBasicCredentials, Depends(HTTPBa
         return FileResponse(path=FLAG_DIRECTORY + "/log.csv", filename="flagged.csv", media_type="text/csv")
 
 
+@app.delete("/flagged/delete/{index}")
+def delete_flagged(index: int, credentials: Annotated[HTTPBasicCredentials, Depends(HTTPBasic())]):
+    check_password(credentials.password, FLAG_PASSWORD)
+    if os.path.exists(FLAG_DIRECTORY + "/log.csv"):
+        data = pd.read_csv(FLAG_DIRECTORY + "/log.csv", na_filter=False)
+        if index < 0 or index >= len(data):
+            raise HTTPException(status_code=404, detail="Index out of range")
+        data.drop(index, inplace=True)
+        data.to_csv(FLAG_DIRECTORY + "/log.csv", index=False)
+
+
 @app.get("/flagged/{index}")
 def get_flagged(index: int, credentials: Annotated[HTTPBasicCredentials, Depends(HTTPBasic())]):
     check_password(credentials.password, FLAG_PASSWORD)
@@ -161,9 +172,7 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
         )
 
     # Inputs
-    prompt = gr.Textbox(
-        label="Question (optional, will not be compressed)", lines=1, max_lines=1, elem_classes="question-target"
-    )
+    prompt = gr.Textbox(label="Question", lines=1, max_lines=1, elem_classes="question-target")
     context = gr.Textbox(label="Context", lines=8, max_lines=8, autoscroll=False, elem_classes="word-count")
     rate = gr.Slider(0.1, 1, 0.5, step=0.05, label="Rate")
     target_model = gr.Radio(label="Target LLM Model", choices=LLM_MODELS, value=LLM_MODELS[0])
@@ -183,7 +192,6 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
     )
     with gr.Column(variant="panel"):
         with gr.Row():
-            # TODO: use state instead of invisible textboxes
             response_a = gr.Textbox(label="LLM Response A", lines=10, max_lines=10, autoscroll=False, interactive=False)
             response_a_obj = gr.Textbox(label="Response A", visible=False)
             response_b = gr.Textbox(label="LLM Response B", lines=10, max_lines=10, autoscroll=False, interactive=False)

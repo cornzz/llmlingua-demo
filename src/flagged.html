@@ -11,12 +11,24 @@
         #download button {
             padding: 0.5em;
             margin: 0 1em;
-            cursor: pointer;
         }
 
         .pointer,
-        .metrics {
+        .metrics,
+        button {
             cursor: pointer;
+        }
+
+        .flex {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .delete {
+            background: none;
+            border: none;
         }
 
         .tooltip-container {
@@ -50,6 +62,17 @@
             opacity: 1;
             pointer-events: all;
         }
+
+        .datatable-column-filter-wrapper {
+            position: absolute;
+        }
+
+        .datatable-column-filter-menu {
+            background: #fff;
+            list-style: none;
+            padding-left: 0;
+            border: solid 1px;
+        }
     </style>
 </head>
 
@@ -60,21 +83,39 @@
         <div id="tooltip"></div>
     </div>
     <script>
+        const deleteIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#555" viewBox="0 -960 960 960"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></svg>`;
+        const models = {
+            "meta-llama/Meta-Llama-3.1-70B-Instruct": "llama",
+            "mistral-7b-q4": "mistral",
+            "CohereForAI/c4ai-command-r-plus": "c4ai",
+        }
+        // Table setup
         const overflow = (data, cap = 100) => {
             if (data.length <= cap) return data;
             return `<div class="pointer" title="Show more">${data.slice(0, cap)}...</div>`;
         }
+        const tooltip = document.getElementById('tooltip');
         const dataTable = new simpleDatatables.DataTable(document.querySelector('#table'), {
             columns: [
-                { select: 0, type: 'string', render: (data) => `<a href="/flagged/${data}" target="_blank" title="Show original">${data}</a>` },
-                ...[1, 2, 3, 6, 7].map((i) => ({ select: i, type: 'string', render: (data) => overflow(data) })),
+                {
+                    select: 0,
+                    type: 'string',
+                    render: (data, _, index) => `
+                            <div class="flex">
+                                <a href="/flagged/${data}" target="_blank" title="Show original">${data}</a><br>
+                                <button class="delete" onclick="deleteItem(${data}, ${index})">${deleteIcon}</button>
+                            </div>
+                        `
+                },
+                ...[1, 2, 3, 7, 8].map((i) => ({ select: i, type: 'string', render: (data) => overflow(data) })),
                 { select: 5, type: 'string', render: (data) => '<button class="metrics">Show</button>' },
-                { select: 9, type: 'string', render: (data) => overflow(data, 5) },
-                { select: 10, type: 'string', render: (data) => data?.slice(5, -7) }
+                { select: 6, type: 'string', render: (data) => `<div class="pointer" title="Show more">${models[data] ?? data}</div>` },
+                { select: 10, type: 'string', render: (data) => overflow(data, 5) },
+                { select: 11, type: 'string', render: (data) => data?.slice(5, -7) }
             ]
         });
 
-        const tooltip = document.getElementById('tooltip');
+        // Tooltip helper functions
         const showTooltip = (event, data = null) => {
             const cell = event.target.parentNode.cellIndex;
             const row = event.target.parentNode.parentNode.dataset.index;
@@ -92,14 +133,30 @@
             };
             window.addEventListener('click', hideTooltip);
         }
-        const registerClickHandler = () => {
+        const addTooltipListener = () => {
             document.querySelectorAll('.pointer, .metrics').forEach((el) => el.addEventListener('click', showTooltip));
         }
-        dataTable.on('datatable.page', registerClickHandler);
+        addTooltipListener();
+        dataTable.on('datatable.page', addTooltipListener);
         dataTable.on('datatable.init', () => {
-            document.querySelector('.datatable-dropdown').insertAdjacentElement('afterend', document.getElementById('download'))
+            document.querySelector('.datatable-dropdown').insertAdjacentElement('afterend', document.getElementById('download'));
+            simpleDatatables.addColumnFilter(dataTable, { hiddenColumns: [0] });
         })
-        registerClickHandler();
+
+        // Delete button
+        const deleteItem = (id, index) => {
+            if (window.confirm(`Delete item ${id}?`)) {
+                fetch(`/flagged/delete/${id}`, { method: 'DELETE' }).then((res) => {
+                    if (res.ok) {
+                        dataTable.data.data.forEach((row, i) => {
+                            const rowId = +row.cells[0].data;
+                            if (rowId > id) row.cells[0].data = rowId - 1;
+                        });
+                        dataTable.rows.remove(index);
+                    }
+                });
+            }
+        }
     </script>
 </body>
 

@@ -4,6 +4,7 @@
         const date = new Date(+new Date() + 10 * 365 * 24 * 60 * 60 * 1000);
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         document.cookie = `session=${Array(32).fill().map(() => chars.charAt(Math.floor(Math.random() * chars.length))).join('')}; expires=${date.toUTCString()}; path=/`;
+        // TODO: consent modal
     })();
     // Word count for textareas
     const wordCountHandler = (event) => {

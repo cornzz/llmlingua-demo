@@ -77,31 +77,33 @@ def metrics_to_df(metrics: dict):
 
 
 def prepare_flagged_data(data: pd.DataFrame):
-    data["Response A"] = data["Response A"].apply(json.loads)
-    data["Response B"] = data["Response B"].apply(json.loads)
-    data["flag"] = data.apply(
-        lambda x: (
-            x["flag"]
-            if x["flag"] == "N"
-            else "Compressed" if x[f"Response {x['flag']}"]["compressed"] else "Uncompressed"
-        ),
-        axis=1,
-    )
-    data["flag"] = data["flag"].apply(lambda x: "Neither" if x == "N" else x)
-    data["Response A"], data["Response B"] = zip(
-        *data.apply(
+    if not data.empty:
+        data["Response A"] = data["Response A"].apply(json.loads)
+        data["Response B"] = data["Response B"].apply(json.loads)
+        data["flag"] = data.apply(
             lambda x: (
-                map(get_message, [x["Response B"], x["Response A"]])
-                if not x["Response A"]["compressed"]
-                else map(get_message, [x["Response A"], x["Response B"]])
+                x["flag"]
+                if x["flag"] == "N"
+                else "Compressed" if x[f"Response {x['flag']}"]["compressed"] else "Uncompressed"
             ),
             axis=1,
         )
-    )
+        data["flag"] = data["flag"].apply(lambda x: "Neither" if x == "N" else x)
+        data.insert(5, "Model", data["Response A"].apply(lambda x: x["model"]))
+        data["Response A"], data["Response B"] = zip(
+            *data.apply(
+                lambda x: (
+                    map(get_message, [x["Response B"], x["Response A"]])
+                    if not x["Response A"]["compressed"]
+                    else map(get_message, [x["Response A"], x["Response B"]])
+                ),
+                axis=1,
+            )
+        )
+        data["Metrics"] = data["Metrics"].apply(lambda x: metrics_to_df(json.loads(x)).to_html(index=False))
     data = data.rename(
         columns={"Response A": "Compressed", "Response B": "Uncompressed", "username": "user", "timestamp": "time"}
     )
-    data["Metrics"] = data["Metrics"].apply(lambda x: metrics_to_df(json.loads(x)).to_html(index=False))
     return data.iloc[::-1].to_html(table_id="table")
 
 
