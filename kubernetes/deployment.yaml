@@ -29,6 +29,8 @@ spec:
         volumeMounts:
         - name: flagged-data
           mountPath: /demo/flagged
+        - name: flagged-data
+          mountPath: /demo/logs
         env:
           - name: LLM_ENDPOINT
             valueFrom:

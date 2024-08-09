@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -15,6 +16,7 @@ from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from llmlingua import PromptCompressor
 
+from .logger import build_logger
 from .utils import (
     activate_button,
     check_password,
@@ -38,6 +40,7 @@ CUDA_AVAILABLE = torch.cuda.is_available()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FLAG_DIRECTORY = os.path.join(BASE_DIR, "../flagged")
 FLAG_PASSWORD = os.getenv("FLAG_PASSWORD")
+LOG_DIRECTORY = os.path.join(BASE_DIR, "../logs")
 with open(os.path.join(BASE_DIR, "app.js")) as f:
     JS = f.read()
 with open(os.path.join(BASE_DIR, "app.css")) as f:
@@ -47,6 +50,7 @@ if not LLM_ENDPOINT:
     print("LLM_ENDPOINT environment variable is not set. Exiting...")
     sys.exit(1)
 
+logger = build_logger("monitor", LOG_DIRECTORY, "monitor.log")
 app = FastAPI()
 llm_lingua = PromptCompressor(
     model_name="microsoft/llmlingua-2-xlm-roberta-large-meetingbank",
@@ -125,8 +129,12 @@ def compress_prompt(prompt: str, rate: float):
     return result["compressed_prompt"], create_metrics_df(result), compression_time
 
 
-def run_demo(prompt: str, context: str, rate: float, target_model: str, ui_settings: list[str]):
-    # TODO: 1. add (persistent) logging 2. allow selecting parallel / sequential processing (?)
+def run_demo(prompt: str, context: str, rate: float, target_model: str, ui_settings: list[str], request: gr.Request):
+    # TODO: allow selecting parallel / sequential processing (?)
+    print(
+        f"RUN DEMO - prompt: {len(prompt)}, context: {len(context)}, rate: {rate}, model: {target_model.split('/')[-1]}",
+        f"{'(compress only) ' if 'Compress only' in ui_settings else ''}- from {request.cookies['session']}",
+    )
     if "Compress only" in ui_settings:
         compressed, metrics, compression_time = compress_prompt(context, rate)
         metrics["Compression"] = [f"{compression_time:.2f}s"]
@@ -263,6 +271,10 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
 
     # Flagging
     def flag(prompt, context, compr_prompt, rate, metrics, res_a_obj, res_b_obj, flag_button, request: gr.Request):
+        model = re.search(r'model": "(?:[^/]*\/)?(.*?)", "object', res_a_obj)
+        print(
+            f"FLAG - model: {model.group(1) if model else ''}, flag: {flag_button[0]} - from {request.cookies['session']}"
+        )
         args = [prompt, context, compr_prompt, rate, metrics, res_a_obj, res_b_obj]
         flagging_callback.flag(args, flag_option=flag_button[0], username=request.cookies["session"])
         gr.Info("Preference saved. Thank you for your feedback.")
