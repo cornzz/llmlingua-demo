@@ -53,7 +53,7 @@ def build_logger(logger_name, logger_directory, logger_filename):
     if logger_directory != "":
         os.makedirs(logger_directory, exist_ok=True)
         filename = os.path.join(logger_directory, logger_filename)
-        handler = logging.handlers.TimedRotatingFileHandler(filename, when="D", utc=True, encoding="utf-8")
+        handler = logging.handlers.TimedRotatingFileHandler(filename, when="D", encoding="utf-8")
         handler.setFormatter(formatter)
 
         for l in [stdout_logger, stderr_logger, logger]:
