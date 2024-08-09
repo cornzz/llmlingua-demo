@@ -140,7 +140,7 @@ def compress_prompt(prompt: str, rate: float):
 def run_demo(prompt: str, context: str, rate: float, target_model: str, ui_settings: list[str], request: gr.Request):
     # TODO: allow selecting parallel / sequential processing (?)
     print(
-        f"RUN DEMO - prompt: {len(prompt)}, context: {len(context)}, rate: {rate}, model: {target_model.split('/')[-1]}",
+        f"RUN DEMO - prompt: {len(prompt.split())}, context: {len(context.split())}, rate: {rate}, model: {target_model.split('/')[-1]}",
         f"{'(compress only) ' if 'Compress only' in ui_settings else ''}- from {request.cookies['session']}",
     )
     if "Compress only" in ui_settings:
