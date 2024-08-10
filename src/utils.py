@@ -44,14 +44,21 @@ def activate_button(*values):
     return gr.Button(interactive=any(bool(value) for value in values))
 
 
-def handle_ui_options(value: list[str]):
-    show_prompt = "Show Separate Context Field" in value
+def handle_ui_settings(value: list[str]):
+    show_question = "Show Separate Context Field" in value
     return (
-        gr.Textbox(visible=True) if show_prompt else gr.Textbox(visible=False, value=None),
-        gr.Textbox(label="Context" if show_prompt else "Prompt"),
+        gr.Textbox(visible=True) if show_question else gr.Textbox(visible=False, value=None),
+        gr.Textbox(label="Context" if show_question else "Prompt"),
         gr.HighlightedText(visible="Show Compressed Prompt" in value),
         gr.DataFrame(visible="Show Metrics" in value),
-        gr.Column(visible="Compress only" not in value),
+    )
+
+
+def handle_model_change(value: str, options: list[str]):
+    compress_only = value == "Compress only"
+    return (
+        gr.HighlightedText(visible="Show Compressed Prompt" in options or compress_only),
+        gr.Column(visible=not compress_only),
     )
 
 

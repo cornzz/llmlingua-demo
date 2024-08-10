@@ -22,10 +22,6 @@
         }, 300));
     });
 
-    // Show compressed prompt if "compress only" is checked
-    const ui_settings = document.querySelectorAll('.ui-settings input');
-    ui_settings[3].addEventListener('change', (event) => event.target.checked && !ui_settings[2].checked && ui_settings[2].click());
-
     // Hide diff button
     const diff = document.getElementById('compressed-diff');
     const diffButton = document.createElement('button');
@@ -35,6 +31,7 @@
 
     // Question click handler
     const handleQuestionClick = (event) => {
+        const ui_settings = document.querySelectorAll('.ui-settings input');
         const promptCheckbox = ui_settings[1];
         if (!promptCheckbox.checked) promptCheckbox.click();
         const promptInput = document.querySelector('.question-target input');

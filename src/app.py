@@ -12,7 +12,7 @@ import requests
 import torch
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException
-from fastapi.responses import FileResponse, HTMLResponse, PlainTextResponse, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from llmlingua import PromptCompressor
 
@@ -23,7 +23,8 @@ from .utils import (
     check_password,
     create_llm_response,
     create_metrics_df,
-    handle_ui_options,
+    handle_model_change,
+    handle_ui_settings,
     metrics_to_df,
     prepare_flagged_data,
     shuffle_and_flatten,
@@ -36,7 +37,12 @@ load_dotenv()
 
 LLM_ENDPOINT = os.getenv("LLM_ENDPOINT")
 LLM_TOKEN = os.getenv("LLM_TOKEN")
-LLM_MODELS = ["meta-llama/Meta-Llama-3.1-70B-Instruct", "mistral-7b-q4", "CohereForAI/c4ai-command-r-plus"]
+LLM_LIST = [
+    "meta-llama/Meta-Llama-3.1-70B-Instruct",
+    "mistral-7b-q4",
+    "CohereForAI/c4ai-command-r-plus",
+    "Compress only",
+]
 MPS_AVAILABLE = torch.backends.mps.is_available()
 CUDA_AVAILABLE = torch.cuda.is_available()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -143,13 +149,12 @@ def compress_prompt(prompt: str, rate: float):
     return result["compressed_prompt"], diff, create_metrics_df(result), compression_time
 
 
-def run_demo(prompt: str, context: str, rate: float, target_model: str, ui_settings: list[str], request: gr.Request):
-    # TODO: allow selecting parallel / sequential processing (?)
+def run_demo(prompt: str, context: str, rate: float, target_model: str, request: gr.Request):
     print(
-        f"RUN DEMO - prompt: {len(prompt.split())}, context: {len(context.split())}, rate: {rate}, model: {target_model.split('/')[-1]}",
-        f"{'(compress only) ' if 'Compress only' in ui_settings else ''}- from {request.cookies['session']}",
+        f"RUN DEMO - prompt: {len(prompt.split())}, context: {len(context.split())}, rate: {rate},",
+        f"model: {target_model.split('/')[-1]} - from {request.cookies['session']}",
     )
-    if "Compress only" in ui_settings:
+    if target_model == "Compress only":
         compressed, diff, metrics, compression_time = compress_prompt(context, rate)
         metrics["Compression"] = [f"{compression_time:.2f}s"]
         return compressed, diff, metrics, None, None, None, None
@@ -189,7 +194,7 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
         """
         )
         ui_settings = gr.CheckboxGroup(
-            ["Show Metrics", "Show Separate Context Field", "Show Compressed Prompt", "Compress only"],
+            ["Show Metrics", "Show Separate Context Field", "Show Compressed Prompt"],
             label="UI Settings",
             value=["Show Metrics", "Show Separate Context Field"],
             elem_classes="ui-settings",
@@ -199,8 +204,7 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
     prompt = gr.Textbox(label="Question", lines=1, max_lines=1, elem_classes="question-target")
     context = gr.Textbox(label="Context", lines=8, max_lines=8, autoscroll=False, elem_classes="word-count")
     rate = gr.Slider(0.1, 1, 0.5, step=0.05, label="Rate")
-    # TODO: move "compress only" here
-    target_model = gr.Radio(label="Target LLM Model", choices=LLM_MODELS, value=LLM_MODELS[0])
+    target_model = gr.Radio(label="Target LLM", choices=LLM_LIST, value=LLM_LIST[0])
     with gr.Row():
         clear = gr.Button("Clear", elem_classes="clear")
         submit = gr.Button("Submit", variant="primary", interactive=False)
@@ -256,7 +260,7 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
     context.change(activate_button, inputs=[prompt, context], outputs=submit)
     submit.click(
         run_demo,
-        inputs=[prompt, context, rate, target_model, ui_settings],
+        inputs=[prompt, context, rate, target_model],
         outputs=[compressed, compressedDiff, metrics, response_a, response_a_obj, response_b, response_b_obj],
     )
     clear.click(
@@ -275,9 +279,8 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
             qa_pairs,
         ],
     )
-    ui_settings.change(
-        handle_ui_options, inputs=ui_settings, outputs=[prompt, context, compressedDiff, metrics, responses]
-    )
+    ui_settings.change(handle_ui_settings, inputs=ui_settings, outputs=[prompt, context, compressedDiff, metrics])
+    target_model.change(handle_model_change, inputs=[target_model, ui_settings], outputs=[compressedDiff, responses])
     compressed.change(lambda x: update_label(x, compressedDiff), inputs=compressed, outputs=compressedDiff)
     response_a.change(lambda x: update_label(x, response_a), inputs=response_a, outputs=response_a)
     response_b.change(lambda x: update_label(x, response_b), inputs=response_b, outputs=response_b)
