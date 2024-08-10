@@ -8,7 +8,7 @@
     })();
     // Word count for textareas
     const wordCountHandler = (event) => {
-        const words = event.target.value.match(/\w+/g)?.length ?? 0;
+        const words = event.target.value.split(/\s+/).filter(Boolean).length ?? 0;
         const label = event.target.previousElementSibling;
         label.style = words ? `--word-count: " (${words} words)"` : '';
     }
