@@ -16,7 +16,7 @@ def create_metrics_df(result: dict = None):
             ),
             "Ratio": [result["ratio"]] if result else [""],
             "Rate": [result["rate"]] if result else [""],
-            "Saving": [result["saving"].split(", Saving ")[1]] if result else [""],
+            "Saving": [f"${(result['origin_tokens'] - result['compressed_tokens']) * 0.03 / 1000:.4f} in GPT-4"] if result else [""],
             "Compression": [""],
             "End-to-end Latency": [""],
             "End-to-end Latency Compressed (Speedup)": [""],
