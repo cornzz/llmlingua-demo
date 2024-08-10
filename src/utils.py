@@ -8,6 +8,17 @@ from fastapi import HTTPException
 from requests import Response
 
 
+class DiffSeparator(str):
+    def __init__(self, sep):
+        self.sep = sep
+
+    def __add__(self, text):
+        if text in """!@#$%^&*()_+\-=\[\]{};':"\|,.<>\/?`~""":
+            return text
+        else:
+            return self.sep + text
+
+
 def create_metrics_df(result: dict = None):
     df = pd.DataFrame(
         {
@@ -16,7 +27,11 @@ def create_metrics_df(result: dict = None):
             ),
             "Ratio": [result["ratio"]] if result else [""],
             "Rate": [result["rate"]] if result else [""],
-            "Saving": [f"${(result['origin_tokens'] - result['compressed_tokens']) * 0.03 / 1000:.4f} in GPT-4"] if result else [""],
+            "Saving": (
+                [f"${(result['origin_tokens'] - result['compressed_tokens']) * 0.03 / 1000:.4f} in GPT-4"]
+                if result
+                else [""]
+            ),
             "Compression": [""],
             "End-to-end Latency": [""],
             "End-to-end Latency Compressed (Speedup)": [""],
@@ -34,16 +49,20 @@ def handle_ui_options(value: list[str]):
     return (
         gr.Textbox(visible=True) if show_prompt else gr.Textbox(visible=False, value=None),
         gr.Textbox(label="Context" if show_prompt else "Prompt"),
-        gr.Textbox(visible="Show Compressed Prompt" in value),
+        gr.HighlightedText(visible="Show Compressed Prompt" in value),
         gr.DataFrame(visible="Show Metrics" in value),
         gr.Column(visible="Compress only" not in value),
     )
 
 
-def update_label(content: str, textbox: gr.Textbox):
+def update_label(content: str, component: gr.Textbox | gr.HighlightedText):
     words = len(content.split())
-    new_label = textbox.label.split(" (")[0] + (f" ({words} words)" if words else "")
-    return gr.Textbox(label=new_label, value=content)
+    new_label = component.label.split(" (")[0] + (f" ({words} words)" if words else "")
+    return (
+        gr.Textbox(label=new_label)
+        if isinstance(component, gr.Textbox)
+        else gr.HighlightedText(label=new_label, elem_classes="no-content" if not words else "")
+    )
 
 
 def shuffle_and_flatten(original: dict[str, object], compressed: dict[str, object]):

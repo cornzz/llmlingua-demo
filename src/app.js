@@ -1,11 +1,11 @@
 () => {
-    (() => {
-        if (document.cookie.includes('session=')) return;
+    if (!document.cookie.includes('session=')) {
         window.alert("By using this app, you agree that submitted data is recorded and may be used for research purposes. Please refrain from submitting any personal or confidential information.");
         const date = new Date(+new Date() + 10 * 365 * 24 * 60 * 60 * 1000);
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         document.cookie = `session=${Array(32).fill().map(() => chars.charAt(Math.floor(Math.random() * chars.length))).join('')}; expires=${date.toUTCString()}; path=/`;
-    })();
+    }
+
     // Word count for textareas
     const wordCountHandler = (event) => {
         const words = event.target.value.split(/\s+/).filter(Boolean).length ?? 0;
@@ -14,18 +14,28 @@
     }
     const wordCountFields = document.querySelectorAll('.word-count textarea');
     wordCountFields.forEach((t) => t.addEventListener('input', wordCountHandler));
+
     // Add listener to example prompt buttons to set wordcount on selection
     document.querySelectorAll('.gallery, button.clear').forEach((item) => {
         item.addEventListener('click', () => setTimeout(() => {
             wordCountFields.forEach((t) => wordCountHandler({ target: t }))
         }, 300));
     });
-    const ui_settings = document.querySelectorAll('.ui-settings input');
+
     // Show compressed prompt if "compress only" is checked
-    ui_settings[3].addEventListener('change', (event) => event.target.checked && !ui_settings[1].checked && ui_settings[1].click());
+    const ui_settings = document.querySelectorAll('.ui-settings input');
+    ui_settings[3].addEventListener('change', (event) => event.target.checked && !ui_settings[2].checked && ui_settings[2].click());
+
+    // Hide diff button
+    const diff = document.getElementById('compressed-diff');
+    const diffButton = document.createElement('button');
+    diffButton.classList.add('diff-button');
+    diff.querySelector('label').appendChild(diffButton);
+    diffButton.addEventListener('click', () => diff.classList.toggle('show-diff'));
+
     // Question click handler
     const handleQuestionClick = (event) => {
-        const promptCheckbox = ui_settings[0];
+        const promptCheckbox = ui_settings[1];
         if (!promptCheckbox.checked) promptCheckbox.click();
         const promptInput = document.querySelector('.question-target input');
         promptInput.value = event.target.innerText;

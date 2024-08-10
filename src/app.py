@@ -18,6 +18,7 @@ from llmlingua import PromptCompressor
 
 from .logger import build_logger
 from .utils import (
+    DiffSeparator,
     activate_button,
     check_password,
     create_llm_response,
@@ -131,10 +132,15 @@ def call_llm_api(prompt: str, model: str, compressed: bool = False):
 
 def compress_prompt(prompt: str, rate: float):
     start = time.time()
-    result = llm_lingua.compress_prompt(prompt, rate=rate)
+    result = llm_lingua.compress_prompt(prompt, rate=rate, return_word_label=True)
     compression_time = time.time() - start
 
-    return result["compressed_prompt"], create_metrics_df(result), compression_time
+    word_sep, label_sep = "\t\t|\t\t", " "
+    diff = []
+    for line in result["fn_labeled_original_prompt"].split(word_sep):
+        word, label = line.split(label_sep)
+        diff.append((word, "+") if label == "1" else (word, None))
+    return result["compressed_prompt"], diff, create_metrics_df(result), compression_time
 
 
 def run_demo(prompt: str, context: str, rate: float, target_model: str, ui_settings: list[str], request: gr.Request):
@@ -144,14 +150,15 @@ def run_demo(prompt: str, context: str, rate: float, target_model: str, ui_setti
         f"{'(compress only) ' if 'Compress only' in ui_settings else ''}- from {request.cookies['session']}",
     )
     if "Compress only" in ui_settings:
-        compressed, metrics, compression_time = compress_prompt(context, rate)
+        compressed, diff, metrics, compression_time = compress_prompt(context, rate)
         metrics["Compression"] = [f"{compression_time:.2f}s"]
-        return compressed, metrics, None, None, None, None
+        return compressed, diff, metrics, None, None, None, None
+
     with ThreadPoolExecutor() as executor:
         future_original = executor.submit(
             call_llm_api, "\n\n".join([prompt, context]) if prompt else context, target_model
         )
-        compressed, metrics, compression_time = compress_prompt(context, rate)
+        compressed, diff, metrics, compression_time = compress_prompt(context, rate)
         res_compressed = call_llm_api("\n\n".join([prompt, compressed]) if prompt else compressed, target_model, True)
         res_original = future_original.result()
 
@@ -163,7 +170,7 @@ def run_demo(prompt: str, context: str, rate: float, target_model: str, ui_setti
         f"{end_to_end_compressed:.2f}s ({end_to_end_original / end_to_end_compressed:.2f}x)"
     ]
     res_original["obj"], res_compressed["obj"] = json.dumps(res_original["obj"]), json.dumps(res_compressed["obj"])
-    return compressed, metrics, *shuffle_and_flatten(res_original, res_compressed)
+    return compressed, diff, metrics, *shuffle_and_flatten(res_original, res_compressed)
 
 
 with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
@@ -182,9 +189,9 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
         """
         )
         ui_settings = gr.CheckboxGroup(
-            ["Show Separate Context Field", "Show Compressed Prompt", "Show Metrics", "Compress only"],
+            ["Show Metrics", "Show Separate Context Field", "Show Compressed Prompt", "Compress only"],
             label="UI Settings",
-            value=["Show Separate Context Field", "Show Metrics"],
+            value=["Show Metrics", "Show Separate Context Field"],
             elem_classes="ui-settings",
         )
 
@@ -192,6 +199,7 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
     prompt = gr.Textbox(label="Question", lines=1, max_lines=1, elem_classes="question-target")
     context = gr.Textbox(label="Context", lines=8, max_lines=8, autoscroll=False, elem_classes="word-count")
     rate = gr.Slider(0.1, 1, 0.5, step=0.05, label="Rate")
+    # TODO: move "compress only" here
     target_model = gr.Radio(label="Target LLM Model", choices=LLM_MODELS, value=LLM_MODELS[0])
     with gr.Row():
         clear = gr.Button("Clear", elem_classes="clear")
@@ -206,7 +214,17 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
         show_label=False,
         interactive=False,
     )
-    compressed = gr.Textbox(label="Compressed Prompt", lines=2, visible=False, interactive=False)
+    compressed = gr.Textbox(label="Compressed Prompt", lines=2, max_lines=2, visible=False, interactive=False)
+    compressedDiff = gr.HighlightedText(
+        label="Compressed Prompt",
+        visible=False,
+        show_inline_category=False,
+        combine_adjacent=True,
+        adjacent_separator=DiffSeparator(" "),
+        color_map={"+": "green"},
+        elem_id="compressed-diff",
+        elem_classes="no-content",
+    )
     with gr.Column(variant="panel") as responses:
         with gr.Row():
             response_a = gr.Textbox(label="LLM Response A", lines=10, max_lines=10, autoscroll=False, interactive=False)
@@ -239,14 +257,15 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
     submit.click(
         run_demo,
         inputs=[prompt, context, rate, target_model, ui_settings],
-        outputs=[compressed, metrics, response_a, response_a_obj, response_b, response_b_obj],
+        outputs=[compressed, compressedDiff, metrics, response_a, response_a_obj, response_b, response_b_obj],
     )
     clear.click(
-        lambda: [None] * 7 + [0.5, create_metrics_df(), gr.DataFrame(visible=False)],
+        lambda: [None] * 8 + [0.5, create_metrics_df(), gr.DataFrame(visible=False)],
         outputs=[
             prompt,
             context,
             compressed,
+            compressedDiff,
             response_a_obj,
             response_a,
             response_b_obj,
@@ -256,8 +275,10 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
             qa_pairs,
         ],
     )
-    ui_settings.change(handle_ui_options, inputs=ui_settings, outputs=[prompt, context, compressed, metrics, responses])
-    compressed.change(lambda x: update_label(x, compressed), inputs=compressed, outputs=compressed)
+    ui_settings.change(
+        handle_ui_options, inputs=ui_settings, outputs=[prompt, context, compressedDiff, metrics, responses]
+    )
+    compressed.change(lambda x: update_label(x, compressedDiff), inputs=compressed, outputs=compressedDiff)
     response_a.change(lambda x: update_label(x, response_a), inputs=response_a, outputs=response_a)
     response_b.change(lambda x: update_label(x, response_b), inputs=response_b, outputs=response_b)
     response_a.change(activate_button, inputs=response_a, outputs=flag_a)

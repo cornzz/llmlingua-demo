@@ -1,3 +1,12 @@
+.word-count label span::after {
+    content: var(--word-count);
+}
+
+.question-target label span::after {
+    content: " (optional, will not be compressed)";
+}
+
+/* Accordion component (about text) */
 .accordion {
     background: transparent;
 }
@@ -7,14 +16,79 @@
     font-size: 1rem;
 }
 
+/* Examples component */
 .gallery-item {
     max-height: 100px;
 }
 
-.word-count label span::after {
-    content: var(--word-count);
+/* HighlightedText component (compressed diff) */
+.textfield {
+    line-height: 1.29;
+    max-height: 200px;
+    overflow: auto;
+    padding: var(--input-padding);
+    border: var(--input-border-width) solid var(--input-border-color);
+    border-radius: var(--input-radius);
 }
 
-.question-target label span::after {
-    content: " (optional, will not be compressed)";
+.textfield .textspan {
+    border-radius: 0;
+    padding: 0;
+    word-break: break-word;
+}
+
+.textfield .hl + .hl{
+    margin-left: 0;
+}
+
+.textfield .no-cat {
+    opacity: 0.3;
+}
+
+/* Toggle diff */
+#compressed-diff label {
+    pointer-events: initial;
+    width: 100%;
+    border-right: none;
+    border-top-right-radius: calc(var(--radius-lg) - 1px);
+    border-bottom-right-radius: 0;
+}
+
+#compressed-diff .empty {
+    margin-top: 0;
+}
+
+#compressed-diff:not(.show-diff) .no-cat {
+    display: none;
+}
+
+#compressed-diff:not(.show-diff) .hl {
+    background-color: transparent !important;
+}
+
+#compressed-diff:not(.show-diff) .hl span {
+    color: var(--body-text-color) !important;
+}
+
+#compressed-diff.no-content button {
+    display: none;
+}
+
+button.diff-button {
+    margin-left: auto;
+    border: var(--button-border-width) solid var(--button-primary-border-color);
+    background: var(--button-primary-background-fill);
+    color: var(--button-primary-text-color);
+    padding: 0 8px;
+    border-radius: 5px;
+}
+
+button.diff-button:hover {
+    border-color: var(--button-primary-border-color-hover);
+    background: var(--button-primary-background-fill-hover);
+    color: var(--button-primary-text-color-hover);
+}
+
+button.diff-button::after {
+    content: "Toggle diff";
 }
