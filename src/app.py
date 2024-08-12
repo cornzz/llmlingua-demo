@@ -156,9 +156,12 @@ def call_llm_api(prompt: str, model: str, compressed: bool = False):
     return create_llm_response(response, compressed, response.status_code != 200, start, end=time.time())
 
 
-def compress_prompt(prompt: str, rate: float):
+def compress_prompt(prompt: str, rate: float, force_tokens: list[str], force_digits: bool):
+    force_tokens = ["\n" if x == "\\n" else x for x in force_tokens]
     start = time.time()
-    result = llm_lingua.compress_prompt(prompt, rate=rate, force_tokens=["\n"], return_word_label=True)
+    result = llm_lingua.compress_prompt(
+        prompt, rate=rate, force_tokens=force_tokens, force_reserve_digit=force_digits, return_word_label=True
+    )
     compression_time = time.time() - start
 
     word_sep, label_sep = "\t\t|\t\t", " "
@@ -169,13 +172,21 @@ def compress_prompt(prompt: str, rate: float):
     return result["compressed_prompt"], diff, create_metrics_df(result), compression_time
 
 
-def run_demo(prompt: str, context: str, rate: float, target_model: str, request: gr.Request):
+def run_demo(
+    prompt: str,
+    context: str,
+    rate: float,
+    target_model: str,
+    force_tokens: list[str],
+    force_digits: list[str],
+    request: gr.Request,
+):
     print(
         f"RUN DEMO - prompt: {len(prompt.split())}, context: {len(context.split())}, rate: {rate},",
         f"model: {target_model.split('/')[-1]} - from {request.cookies['session']}",
     )
     if target_model == "Compress only":
-        compressed, diff, metrics, compression_time = compress_prompt(context, rate)
+        compressed, diff, metrics, compression_time = compress_prompt(context, rate, force_tokens, bool(force_digits))
         metrics["Compression"] = [f"{compression_time:.2f}s"]
         return compressed, diff, metrics, None, None, None, None
 
@@ -183,7 +194,7 @@ def run_demo(prompt: str, context: str, rate: float, target_model: str, request:
         future_original = executor.submit(
             call_llm_api, "\n\n".join([prompt, context]) if prompt else context, target_model
         )
-        compressed, diff, metrics, compression_time = compress_prompt(context, rate)
+        compressed, diff, metrics, compression_time = compress_prompt(context, rate, force_tokens, bool(force_digits))
         res_compressed = call_llm_api("\n\n".join([prompt, compressed]) if prompt else compressed, target_model, True)
         res_original = future_original.result()
 
@@ -213,12 +224,24 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
             - LLMLingua-2 is a task-agnostic compression model, so the value of the question field is not considered in the compression process.
         """
         )
-        ui_settings = gr.CheckboxGroup(
-            ["Show Metrics", "Show Separate Context Field", "Show Compressed Prompt"],
-            label="UI Settings",
-            value=["Show Metrics", "Show Separate Context Field"],
-            elem_classes="ui-settings",
-        )
+        with gr.Row():
+            ui_settings = gr.CheckboxGroup(
+                ["Show Metrics", "Show Separate Context Field", "Show Compressed Prompt"],
+                label="UI Settings",
+                value=["Show Metrics", "Show Separate Context Field"],
+                elem_classes="ui-settings",
+                scale=3,
+            )
+            force_tokens = gr.Dropdown(
+                label="Tokens to Preserve",
+                choices=["\\n", ".", "!", "?", ","],
+                value=["\\n"],
+                multiselect=True,
+                allow_custom_value=True,
+                scale=2,
+                elem_classes="force-tokens",
+            )
+            force_digits = gr.CheckboxGroup(["Preserve Digits"], label="", value=[], elem_classes="digits-checkbox")
 
     # Inputs
     prompt = gr.Textbox(label="Question", lines=1, max_lines=1, elem_classes="question-target")
@@ -280,7 +303,7 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
     context.change(activate_button, inputs=[prompt, context], outputs=submit)
     submit.click(
         run_demo,
-        inputs=[prompt, context, rate, target_model],
+        inputs=[prompt, context, rate, target_model, force_tokens, force_digits],
         outputs=[compressed, compressedDiff, metrics, response_a, response_a_obj, response_b, response_b_obj],
     )
     clear.click(

@@ -16,6 +16,19 @@
     font-size: 1rem;
 }
 
+/* Force tokens multiselect */
+.force-tokens .wrap-inner {
+    padding: 3px 5px;
+}
+
+.force-tokens .token {
+    padding: 2px 8px;
+}
+
+.digits-checkbox > span::after {
+    content: "\00a0";
+}
+
 /* Examples component */
 .gallery-item {
     max-height: 100px;
