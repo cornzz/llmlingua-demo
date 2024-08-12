@@ -1,7 +1,9 @@
 import json
 import os
 import re
+import shutil
 import sys
+import tempfile
 import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Annotated
@@ -113,11 +115,29 @@ def get_flagged(index: int, credentials: Annotated[HTTPBasicCredentials, Depends
             raise HTTPException(status_code=404, detail="Index out of range")
 
 
-@app.get("/logs")
+@app.get("/logs", response_class=HTMLResponse)
 def get_logs(credentials: Annotated[HTTPBasicCredentials, Depends(HTTPBasic())]):
     check_password(credentials.password, FLAG_PASSWORD)
-    if os.path.exists(LOG_DIRECTORY + "/monitor.log"):
-        return StreamingResponse(stream_file(os.path.join(LOG_DIRECTORY, "monitor.log")), media_type="text/plain")
+    if os.path.exists(LOG_DIRECTORY):
+        return "<br>".join([f"<a href='/logs/{log_file}'>{log_file}</a>" for log_file in os.listdir(LOG_DIRECTORY)])
+
+
+@app.get("/logs/download")
+def download_logs(credentials: Annotated[HTTPBasicCredentials, Depends(HTTPBasic())]):
+    check_password(credentials.password, FLAG_PASSWORD)
+    if os.path.exists(LOG_DIRECTORY):
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".zip") as tmp_file:
+            zip_path = tmp_file.name
+            shutil.make_archive(base_name=zip_path.replace(".zip", ""), format="zip", root_dir=LOG_DIRECTORY)
+        return FileResponse(path=zip_path, media_type="application/zip", filename="logs.zip")
+
+
+@app.get("/logs/{log_name}")
+def get_logs(log_name: str, credentials: Annotated[HTTPBasicCredentials, Depends(HTTPBasic())]):
+    check_password(credentials.password, FLAG_PASSWORD)
+    log_path = os.path.join(LOG_DIRECTORY, log_name.replace("/", ""))
+    if os.path.exists(log_path):
+        return StreamingResponse(stream_file(log_path), media_type="text/plain")
 
 
 def call_llm_api(prompt: str, model: str, compressed: bool = False):
