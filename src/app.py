@@ -158,7 +158,7 @@ def call_llm_api(prompt: str, model: str, compressed: bool = False):
 
 def compress_prompt(prompt: str, rate: float):
     start = time.time()
-    result = llm_lingua.compress_prompt(prompt, rate=rate, return_word_label=True)
+    result = llm_lingua.compress_prompt(prompt, rate=rate, force_tokens=["\n"], return_word_label=True)
     compression_time = time.time() - start
 
     word_sep, label_sep = "\t\t|\t\t", " "
