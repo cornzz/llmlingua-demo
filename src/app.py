@@ -37,7 +37,7 @@ from .utils import (
 start_load = time.time()
 load_dotenv()
 
-APP_PATH = os.getenv("APP_PATH") or "/"
+APP_PATH = os.getenv("APP_PATH") or ""
 LLM_ENDPOINT = os.getenv("LLM_ENDPOINT")
 LLM_TOKEN = os.getenv("LLM_TOKEN")
 LLM_LIST = [
@@ -363,5 +363,5 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
     flag_b.click(flag, inputs=FLAG_COMPONENTS + [flag_b], outputs=[flag_a, flag_n, flag_b], preprocess=False)
 
 
-app = gr.mount_gradio_app(app, demo, path=APP_PATH)
+app = gr.mount_gradio_app(app, demo, path=APP_PATH, root_path=APP_PATH)
 print(f"Ready! Loaded in {time.time() - start_load:.2f}s")
