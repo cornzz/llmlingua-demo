@@ -34,6 +34,7 @@ from .utils import (
     update_label,
 )
 
+print("Loading LLMLingua Demo...")
 start_load = time.time()
 load_dotenv()
 
@@ -275,6 +276,7 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
         elem_classes="no-content",
     )
     with gr.Column(variant="panel") as responses:
+        # TODO: stream response?
         with gr.Row():
             response_a = gr.Textbox(label="LLM Response A", lines=10, max_lines=10, autoscroll=False, interactive=False)
             response_a_obj = gr.Textbox(label="Response A", visible=False)
