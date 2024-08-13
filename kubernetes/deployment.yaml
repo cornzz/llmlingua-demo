@@ -29,9 +29,15 @@ spec:
         volumeMounts:
         - name: flagged-data
           mountPath: /demo/flagged
+        - name: cache
+          mountPath: /demo/cache
         env:
           - name: APP_PATH
             value: /compress
+          - name: HF_HUB_CACHE
+            value: /demo/cache/huggingface
+          - name: TIKTOKEN_CACHE_DIR
+            value: /demo/cache/tiktoken
           - name: LLM_ENDPOINT
             valueFrom:
               secretKeyRef:
@@ -51,3 +57,6 @@ spec:
       - name: flagged-data
         persistentVolumeClaim:
           claimName: llmlingua-demo-data
+      - name: cache
+        persistentVolumeClaim:
+          claimName: llmlingua-demo-cache
