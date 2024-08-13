@@ -62,7 +62,7 @@ if not LLM_ENDPOINT:
     sys.exit(1)
 
 logger = build_logger("monitor", LOG_DIRECTORY, "monitor.log")
-app = FastAPI()
+app = FastAPI(openapi_url="", root_path=APP_PATH)
 llm_lingua = PromptCompressor(
     model_name="microsoft/llmlingua-2-xlm-roberta-large-meetingbank",
     use_llmlingua2=True,
@@ -120,7 +120,8 @@ def get_flagged(index: int, credentials: Annotated[HTTPBasicCredentials, Depends
 def get_logs(credentials: Annotated[HTTPBasicCredentials, Depends(HTTPBasic())]):
     check_password(credentials.password, FLAG_PASSWORD)
     if os.path.exists(LOG_DIRECTORY):
-        return "<br>".join([f"<a href='/logs/{log_file}'>{log_file}</a>" for log_file in os.listdir(LOG_DIRECTORY)])
+        logs = "<br>".join([f"<a href='logs/{log_file}'>{log_file}</a>" for log_file in os.listdir(LOG_DIRECTORY)])
+        return f"{logs}<br>-----<br><a href='logs/download'>Download all</a>"
 
 
 @app.get("/logs/download")
@@ -363,5 +364,5 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
     flag_b.click(flag, inputs=FLAG_COMPONENTS + [flag_b], outputs=[flag_a, flag_n, flag_b], preprocess=False)
 
 
-app = gr.mount_gradio_app(app, demo, path=APP_PATH, root_path=APP_PATH)
+app = gr.mount_gradio_app(app, demo, path="/", root_path=APP_PATH)
 print(f"Ready! Loaded in {time.time() - start_load:.2f}s")
