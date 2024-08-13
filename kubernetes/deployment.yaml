@@ -30,6 +30,8 @@ spec:
         - name: flagged-data
           mountPath: /demo/flagged
         env:
+          - name: APP_PATH
+            value: /compress
           - name: LLM_ENDPOINT
             valueFrom:
               secretKeyRef:

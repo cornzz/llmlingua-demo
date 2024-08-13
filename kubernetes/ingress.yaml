@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: llmlingua-demo-ingress
+  namespace: cornelius-ns
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - misc.llm.scads.ai
+    secretName: misc.llm.scads.ai-tls
+  rules:
+  - host: misc.llm.scads.ai
+    http:
+      paths:
+      - path: /compress
+        pathType: Prefix
+        backend:
+          service:
+            name: llmlingua-demo-service
+            port:
+              number: 80
