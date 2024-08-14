@@ -19,13 +19,13 @@ spec:
         imagePullPolicy: Always
         resources:
           limits:
-            nvidia.com/gpu: 1
-            cpu: 12
+            cpu: '12'
             memory: 32Gi
+            nvidia.com/gpu: '1'
           requests:
-            nvidia.com/gpu: 1
             cpu: 500m
             memory: 500Mi
+            nvidia.com/gpu: '1'
         volumeMounts:
         - name: flagged-data
           mountPath: /demo/flagged
