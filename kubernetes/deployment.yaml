@@ -14,45 +14,45 @@ spec:
         app: llmlingua-demo
     spec:
       containers:
-      - name: llmlingua-demo
-        image: ghcr.io/cornzz/llmlingua-demo:main
-        imagePullPolicy: Always
-        resources:
-          limits:
-            cpu: '12'
-            memory: 32Gi
-            nvidia.com/gpu: '1'
-          requests:
-            cpu: 500m
-            memory: 500Mi
-            nvidia.com/gpu: '1'
-        volumeMounts:
-          - name: flagged-data
-            mountPath: /demo/flagged
-          # - name: cache
-          #   mountPath: /demo/cache
-        env:
-          - name: APP_PATH
-            value: /compress
-          # - name: HF_HUB_CACHE
-          #   value: /demo/cache/huggingface
-          # - name: TIKTOKEN_CACHE_DIR
-          #   value: /demo/cache/tiktoken
-          - name: LLM_ENDPOINT
-            valueFrom:
-              secretKeyRef:
-                name: llmlingua-demo-secrets
-                key: LLM_ENDPOINT
-          - name: LLM_TOKEN
-            valueFrom:
-              secretKeyRef:
-                name: llmlingua-demo-secrets
-                key: LLM_TOKEN
-          - name: FLAG_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: llmlingua-demo-secrets
-                key: FLAG_PASSWORD
+        - name: llmlingua-demo
+          image: ghcr.io/cornzz/llmlingua-demo:main
+          imagePullPolicy: Always
+          resources:
+            limits:
+              cpu: "12"
+              memory: 32Gi
+              nvidia.com/gpu: "1"
+            requests:
+              cpu: 500m
+              memory: 500Mi
+              nvidia.com/gpu: "1"
+          volumeMounts:
+            - name: flagged-data
+              mountPath: /demo/flagged
+            # - name: cache
+            #   mountPath: /demo/cache
+          env:
+            - name: APP_PATH
+              value: /compress
+            # - name: HF_HUB_CACHE
+            #   value: /demo/cache/huggingface
+            # - name: TIKTOKEN_CACHE_DIR
+            #   value: /demo/cache/tiktoken
+            - name: LLM_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: llmlingua-demo-secrets
+                  key: LLM_ENDPOINT
+            - name: LLM_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: llmlingua-demo-secrets
+                  key: LLM_TOKEN
+            - name: FLAG_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: llmlingua-demo-secrets
+                  key: FLAG_PASSWORD
       volumes:
         - name: flagged-data
           persistentVolumeClaim:
