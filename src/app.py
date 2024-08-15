@@ -227,24 +227,31 @@ with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
             - LLMLingua-2 is a task-agnostic compression model, so the value of the question field is not considered in the compression process.
         """
         )
-        with gr.Row():
-            ui_settings = gr.CheckboxGroup(
-                ["Show Metrics", "Show Separate Context Field", "Show Compressed Prompt"],
-                label="UI Settings",
-                value=["Show Metrics", "Show Separate Context Field"],
-                elem_classes="ui-settings",
-                scale=3,
-            )
-            force_tokens = gr.Dropdown(
-                label="Tokens to Preserve",
-                choices=["\\n", ".", "!", "?", ","],
-                value=["\\n"],
-                multiselect=True,
-                allow_custom_value=True,
-                scale=2,
-                elem_classes="force-tokens",
-            )
-            force_digits = gr.CheckboxGroup(["Preserve Digits"], label="", value=[], elem_classes="digits-checkbox")
+        with gr.Row(variant="compact"):
+            with gr.Column():
+                gr.Markdown("UI Settings")
+                ui_settings = gr.CheckboxGroup(
+                    ["Show Metrics", "Show Separate Context Field", "Show Compressed Prompt"],
+                    container=False,
+                    value=["Show Metrics", "Show Separate Context Field"],
+                    elem_classes="ui-settings",
+                )
+            with gr.Column():
+                gr.Markdown("Tokens to Preserve")
+                with gr.Row():
+                    force_tokens = gr.Dropdown(
+                        show_label=False,
+                        container=False,
+                        choices=["\\n", ".", "!", "?", ","],
+                        value=["\\n"],
+                        multiselect=True,
+                        allow_custom_value=True,
+                        scale=3,
+                        elem_classes="force-tokens",
+                    )
+                    force_digits = gr.CheckboxGroup(
+                        ["Preserve Digits"], show_label=False, container=False, value=[], elem_classes="digits-checkbox"
+                    )
 
     # Inputs
     prompt = gr.Textbox(label="Question", lines=1, max_lines=1, elem_classes="question-target")

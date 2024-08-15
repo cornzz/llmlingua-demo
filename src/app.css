@@ -25,10 +25,6 @@
     padding: 2px 8px;
 }
 
-.digits-checkbox > span::after {
-    content: "\00a0";
-}
-
 /* Examples component */
 .gallery-item {
     max-height: 100px;
