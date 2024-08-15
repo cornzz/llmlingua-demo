@@ -5,8 +5,7 @@ Dependencies: `gradio`, `llmlingua`, `python-dotenv`
 - Install Python
 - Create and activate a virtual environment and install the requirements:
 ```
-python -m venv venv
-source venv/bin/activate
+python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 ```
 - Create a `.env` file, e.g.:
@@ -17,11 +16,12 @@ LLM_LIST=gpt-4o-mini, gpt-3.5-turbo     # Optional. If not provided, a list of m
 FLAG_PASSWORD=very_secret               # Optional. If not provided, /flagged and /logs endpoints are disabled
 ```
 
-## Deployment
+## Running
 ```
 source venv/bin/activate
 uvicorn src.app:app --host 0.0.0.0 --port 80 --log-level warning
 ```
+The demo is now reachable under http://localhost
 
 ## Development
 ```
