@@ -128,6 +128,10 @@ def get_logs(log_name: str, credentials: Annotated[HTTPBasicCredentials, Depends
         return StreamingResponse(stream_file(log_path), media_type="text/plain")
 
 
+@app.get("/metrics")
+def get_metrics():
+    return {}
+
 def call_llm_api(prompt: str, model: str, compressed: bool = False):
     headers = {"Content-Type": "application/json", "Authorization": f"Bearer {LLM_TOKEN or 'no-key'}"}
     data = json.dumps(
