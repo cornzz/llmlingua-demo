@@ -2,7 +2,6 @@ import json
 import os
 import re
 import shutil
-import sys
 import tempfile
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -25,6 +24,7 @@ from .utils import (
     check_password,
     create_llm_response,
     create_metrics_df,
+    get_api_info,
     handle_model_change,
     handle_ui_settings,
     metrics_to_df,
@@ -34,35 +34,20 @@ from .utils import (
     update_label,
 )
 
-print("Loading LLMLingua Demo...")
 start_load = time.time()
 load_dotenv()
 
-APP_PATH = os.getenv("APP_PATH") or ""
-LLM_ENDPOINT = os.getenv("LLM_ENDPOINT")
-LLM_TOKEN = os.getenv("LLM_TOKEN")
-LLM_LIST = [
-    "meta-llama/Meta-Llama-3.1-70B-Instruct",
-    "mistral-7b-q4",
-    "CohereForAI/c4ai-command-r-plus",
-    "Compress only",
-]
-MPS_AVAILABLE = torch.backends.mps.is_available()
-CUDA_AVAILABLE = torch.cuda.is_available()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FLAG_DIRECTORY = os.path.join(BASE_DIR, "../flagged")
 FLAG_PASSWORD = os.getenv("FLAG_PASSWORD")
 LOG_DIRECTORY = os.path.join(FLAG_DIRECTORY, "logs")
-with open(os.path.join(BASE_DIR, "app.js")) as f:
-    JS = f.read()
-with open(os.path.join(BASE_DIR, "app.css")) as f:
-    CSS = f.read()
+build_logger("monitor", LOG_DIRECTORY, "monitor.log")
+print("Loading LLMLingua Demo...")
+LLM_ENDPOINT, LLM_TOKEN, LLM_LIST = get_api_info()
+APP_PATH = os.getenv("APP_PATH") or ""
+MPS_AVAILABLE = torch.backends.mps.is_available()
+CUDA_AVAILABLE = torch.cuda.is_available()
 
-if not LLM_ENDPOINT:
-    print("LLM_ENDPOINT environment variable is not set. Exiting...")
-    sys.exit(1)
-
-logger = build_logger("monitor", LOG_DIRECTORY, "monitor.log")
 app = FastAPI(openapi_url="", root_path=APP_PATH)
 llm_lingua = PromptCompressor(
     model_name="microsoft/llmlingua-2-xlm-roberta-large-meetingbank",
@@ -153,7 +138,7 @@ def call_llm_api(prompt: str, model: str, compressed: bool = False):
         }
     )
     start = time.time()
-    response = requests.post(LLM_ENDPOINT, headers=headers, data=data)
+    response = requests.post(f"{LLM_ENDPOINT}/chat/completions", headers=headers, data=data)
     if response.status_code != 200:
         gr.Warning(f"Error calling LLM API: {response.status_code} - {response.text}")
     return create_llm_response(response, compressed, response.status_code != 200, start, end=time.time())
@@ -212,7 +197,9 @@ def run_demo(
     return compressed, diff, metrics, *shuffle_and_flatten(res_original, res_compressed)
 
 
-with gr.Blocks(title="LLMLingua Demo", css=CSS, js=JS) as demo:
+with gr.Blocks(
+    title="LLMLingua Demo", css=os.path.join(BASE_DIR, "app.css"), js=os.path.join(BASE_DIR, "app.js")
+) as demo:
     gr.Markdown("# Prompt Compression A/B Test")
     with gr.Accordion("About this demo (please read):", open=False, elem_classes="accordion"):
         gr.Markdown(

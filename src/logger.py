@@ -5,7 +5,6 @@ import os
 import sys
 import warnings
 
-
 handler = None
 visited_loggers = set()
 
@@ -17,6 +16,12 @@ def build_logger(logger_name, logger_directory, logger_filename):
         fmt="%(asctime)s | %(levelname)s | %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
+
+    # Set the custom format for warnings
+    def custom_warning_format(message, category, filename, lineno, file=None, line=None):
+        return f"{message}"
+
+    warnings.formatwarning = custom_warning_format
 
     # Set the format of root handlers
     if not logging.getLogger().handlers:

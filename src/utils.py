@@ -1,11 +1,14 @@
 import json
+import os
+import sys
+import warnings
 from random import shuffle
 from secrets import compare_digest
 
 import gradio as gr
 import pandas as pd
+import requests
 from fastapi import HTTPException
-from requests import Response
 
 
 class DiffSeparator(str):
@@ -19,7 +22,23 @@ class DiffSeparator(str):
             return self.sep + text
 
 
-def create_metrics_df(result: dict = None):
+def get_api_info() -> list[str]:
+    endpoint, token = os.getenv("LLM_ENDPOINT"), os.getenv("LLM_TOKEN")
+    if not endpoint:
+        print("LLM_ENDPOINT environment variable is not set. Exiting...")
+        sys.exit(1)
+    models = [m.strip() for m in (os.getenv("LLM_LIST") or "").split(",") if m]
+    if not models:
+        headers = {"Content-Type": "application/json", "Authorization": f"Bearer {token or 'no-key'}"}
+        response = requests.get(f"{endpoint}/models", headers=headers)
+        if response.status_code != 200:
+            warnings.warn(f"Error while loading models from API: {response.status_code} - {response.text}")
+        else:
+            models = [model["id"] for model in response.json()["data"]]
+    return endpoint, token, models + ["Compress only"]
+
+
+def create_metrics_df(result: dict = None) -> pd.DataFrame:
     df = pd.DataFrame(
         {
             "Original / Compressed": (
@@ -40,11 +59,11 @@ def create_metrics_df(result: dict = None):
     return df
 
 
-def activate_button(*values):
+def activate_button(*values) -> gr.Button:
     return gr.Button(interactive=any(bool(value) for value in values))
 
 
-def handle_ui_settings(value: list[str]):
+def handle_ui_settings(value: list[str]) -> tuple[gr.Textbox, gr.Textbox, gr.HighlightedText, gr.DataFrame]:
     show_question = "Show Separate Context Field" in value
     return (
         gr.Textbox(visible=True) if show_question else gr.Textbox(visible=False, value=None),
@@ -54,7 +73,7 @@ def handle_ui_settings(value: list[str]):
     )
 
 
-def handle_model_change(value: str, options: list[str]):
+def handle_model_change(value: str, options: list[str]) -> tuple[gr.HighlightedText, gr.Column]:
     compress_only = value == "Compress only"
     return (
         gr.HighlightedText(visible="Show Compressed Prompt" in options or compress_only),
@@ -62,7 +81,7 @@ def handle_model_change(value: str, options: list[str]):
     )
 
 
-def update_label(content: str, component: gr.Textbox | gr.HighlightedText):
+def update_label(content: str, component: gr.Textbox | gr.HighlightedText) -> gr.Textbox | gr.HighlightedText:
     words = len(content.split())
     new_label = component.label.split(" (")[0] + (f" ({words} words)" if words else "")
     return (
@@ -75,7 +94,7 @@ def update_label(content: str, component: gr.Textbox | gr.HighlightedText):
 def shuffle_and_flatten(original: dict[str, object], compressed: dict[str, object]):
     responses = [original, compressed]
     shuffle(responses)
-    return [x for xs in responses for x in xs.values()]
+    return (x for xs in responses for x in xs.values())
 
 
 def get_message(response: dict):
@@ -85,7 +104,7 @@ def get_message(response: dict):
         return f'{response["status"]} - {response["error"]}'
 
 
-def create_llm_response(response: Response, compressed: bool, error: bool, start: float, end: float):
+def create_llm_response(response: requests.Response, compressed: bool, error: bool, start: float, end: float):
     if not error:
         response = response.json()
     obj = {
