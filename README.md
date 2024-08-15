@@ -32,3 +32,7 @@ The demo is now reachable under http://localhost:8000
 
 ## Inspecting flagged data and logs
 Navigate to `/flagged` or `/logs` and enter the password set in `.env`
+
+## Caches
+- The compression model is cached in `~/.cache/huggingface`, the cache location can be set via `HF_HUB_CACHE`.
+- The tokenizer vocabulary is cached in the operating systems' temporary file directory and can be set via `TIKTOKEN_CACHE_DIR`.
