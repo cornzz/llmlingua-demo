@@ -3,6 +3,8 @@ kind: Service
 metadata:
   name: llmlingua-demo-service
   namespace: cornelius-ns
+  annotations:
+    prometheus.io.scrape: "false"
 spec:
   ports:
     - port: 80
