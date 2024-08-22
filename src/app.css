@@ -9,6 +9,7 @@
 /* Accordion component (about text) */
 .accordion {
     background: transparent;
+    padding: var(--spacing-lg) calc(var(--spacing-lg) + 2px);
 }
 
 .accordion .label-wrap span {
@@ -16,7 +17,21 @@
     font-size: 1rem;
 }
 
-/* Force tokens multiselect */
+.accordion > div:last-child > div {
+    gap: var(--spacing-xl);
+}
+
+#notes {
+    padding: 4px 10px;
+    background: var(--background-fill-secondary);
+}
+
+/* Settings */
+#settings,
+#settings > div {
+    gap: 6px;
+}
+
 .force-tokens .wrap-inner {
     padding: 3px 5px;
 }
@@ -26,8 +41,16 @@
 }
 
 /* Examples component */
-.gallery-item {
+#examples .label {
+    display: none;
+}
+
+#examples .gallery-item {
     max-height: 100px;
+}
+
+#examples .paginate {
+    font-size: var(--text-lg);
 }
 
 /* HighlightedText component (compressed diff) */
