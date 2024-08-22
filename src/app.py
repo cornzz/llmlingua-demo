@@ -210,12 +210,12 @@ with gr.Blocks(
                 Notes:
                 - The order of the responses (compressed / uncompressed prompt) is randomized.
                 - Compression time is included in the compressed end-to-end latency. {'Compression is done on a CPU. Using a GPU would be faster.' if not (MPS_AVAILABLE or CUDA_AVAILABLE) else 'Compression is done on a GPU using MPS.' if MPS_AVAILABLE else f'Compression is done on a GPU ({torch.cuda.get_device_name()}).'}
-                - The provided example prompts were taken from the [LLMLingua-2 Demo](https://huggingface.co/spaces/microsoft/llmlingua-2). Click on a question to autofill the separate, uncompressed question field.
+                - The example prompts provided below were taken from the [LLMLingua-2 Demo](https://huggingface.co/spaces/microsoft/llmlingua-2). Click on a question to autofill the separate, uncompressed question field.
                 - Uncompressed and compressed prompts are processed simultaneously. Thus, and due to other variables, the end-to-end latencies may not be very meaningful.
                 - Token counts are calculated based on the [`cl100k_base` tokenizer](https://platform.openai.com/tokenizer) (GPT-3.5/-4) and may vary for different target models. Saving metric is based on an API pricing of $0.03 / 1000 tokens.
                 - LLMLingua-2 is a task-agnostic compression model, the value of the question field is not considered in the compression process.
             """,
-            elem_id="notes"
+            elem_id="notes",
         )
         with gr.Row(variant="compact", elem_id="settings"):
             with gr.Column():
@@ -244,8 +244,21 @@ with gr.Blocks(
                     )
 
     # Inputs
-    prompt = gr.Textbox(label="Question", lines=1, max_lines=1, elem_classes="question-target")
-    context = gr.Textbox(label="Context", lines=8, max_lines=8, autoscroll=False, elem_classes="word-count")
+    prompt = gr.Textbox(
+        label="Question",
+        lines=1,
+        max_lines=1,
+        placeholder="Who recommended the passage of Docket 1239?",
+        elem_classes="question-target",
+    )
+    context = gr.Textbox(
+        label="Context",
+        lines=8,
+        max_lines=8,
+        autoscroll=False,
+        placeholder=example_dataset[3]["original_prompt"],
+        elem_classes="word-count",
+    )
     rate = gr.Slider(0.1, 1, 0.5, step=0.05, label="Rate")
     target_model = gr.Radio(label="Target LLM", choices=LLM_LIST, value=LLM_LIST[0])
     with gr.Row():
