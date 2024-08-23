@@ -60,6 +60,6 @@ jobs:
     - name: Delete old packages
       uses: actions/delete-package-versions@v5
       with:
-        package-name: ${{ env.IMAGE_NAME }}
+        package-name: 'llmlingua-demo'
         package-type: 'docker'
         min-versions-to-keep: 2
