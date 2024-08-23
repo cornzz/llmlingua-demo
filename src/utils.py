@@ -1,7 +1,5 @@
 import json
 import os
-import sys
-import warnings
 from random import shuffle
 from secrets import compare_digest
 
@@ -25,16 +23,19 @@ class DiffSeparator(str):
 def get_api_info() -> list[str]:
     endpoint, token = os.getenv("LLM_ENDPOINT"), os.getenv("LLM_TOKEN")
     if not endpoint:
-        print("LLM_ENDPOINT environment variable is not set. Exiting...")
-        sys.exit(1)
-    models = [m.strip() for m in (os.getenv("LLM_LIST") or "").split(",") if m]
-    if not models:
-        headers = {"Content-Type": "application/json", "Authorization": f"Bearer {token or 'no-key'}"}
-        response = requests.get(f"{endpoint}/models", headers=headers)
-        if response.status_code != 200:
-            warnings.warn(f"Error while loading models from API: {response.status_code} - {response.text}")
-        else:
-            models = [model["id"] for model in response.json()["data"]]
+        print("LLM_ENDPOINT environment variable is not set, only compression will be possible...")
+        models = []
+    else:
+        if not token:
+            print("LLM_TOKEN environment variable is not set, will use API without token...")
+        models = [m.strip() for m in (os.getenv("LLM_LIST") or "").split(",") if m]
+        if not models:
+            headers = {"Content-Type": "application/json", "Authorization": f"Bearer {token or 'no-key'}"}
+            response = requests.get(f"{endpoint}/models", headers=headers)
+            if response.status_code != 200:
+                print(f"Error while loading models from API: {response.status_code} - {response.text}")
+            else:
+                models = [model["id"] for model in response.json()["data"]]
     return endpoint, token, models + ["Compress only"]
 
 
