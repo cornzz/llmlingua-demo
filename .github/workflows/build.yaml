@@ -60,6 +60,6 @@ jobs:
     - name: Delete old packages
       uses: actions/delete-package-versions@v5
       with:
-        package-name: 'llmlingua-demo'
+        package-name: 'cornzz/llmlingua-demo'
         package-type: 'docker'
         min-versions-to-keep: 2
