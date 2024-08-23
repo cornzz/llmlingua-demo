@@ -33,6 +33,13 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: Delete old packages
+      uses: actions/delete-package-versions@v5
+      with:
+        package-name: 'llmlingua-demo'
+        package-type: 'container'
+        min-versions-to-keep: 2
+
     - name: Extract metadata (tags, labels) for Docker
       id: meta
       uses: docker/metadata-action@v5
@@ -56,10 +63,3 @@ jobs:
         subject-name: ${{ env.IMAGE_NAME }}
         subject-digest: ${{ steps.push.outputs.digest }}
         push-to-registry: true
-
-    - name: Delete old packages
-      uses: actions/delete-package-versions@v5
-      with:
-        package-name: 'llmlingua-demo'
-        package-type: 'container'
-        min-versions-to-keep: 2
