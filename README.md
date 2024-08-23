@@ -10,7 +10,7 @@ pip install -r requirements.txt
 ```
 - Create a `.env` file, e.g.:
 ```
-LLM_ENDPOINT=https://api.openai.com/v1
+LLM_ENDPOINT=https://api.openai.com/v1  # Optional. If not provided, only compression will be possible
 LLM_TOKEN=token_1234
 LLM_LIST=gpt-4o-mini, gpt-3.5-turbo     # Optional. If not provided, a list of models will be fetched from the API
 FLAG_PASSWORD=very_secret               # Optional. If not provided, /flagged and /logs endpoints are disabled
@@ -22,6 +22,17 @@ source venv/bin/activate
 uvicorn src.app:app --host 0.0.0.0 --port 80 --log-level warning
 ```
 The demo is now reachable under http://localhost
+
+**OR** run the demo from a docker container:
+
+```
+docker pull ghcr.io/cornzz/llmlingua-demo:main
+docker run -d -e LLM_ENDPOINT=https://api.openai.com/v1 -e LLM_TOKEN=token_1234 -e LLM_LIST="gpt-4o-mini, gpt-3.5-turbo" -e FLAG_PASSWORD=very_secret -p 8000:8000 ghcr.io/cornzz/llmlingua-demo:main
+```
+The demo is now reachable under http://localhost:8000
+
+> [!NOTE]  
+> If you are not on a `linux/amd64` compatible platform, add `--platform linux/amd64` to the `docker pull` command to force download the image. Note that performance will be worse than if you follow the above instructions. MPS is not supported in docker containers.
 
 ## Development
 ```
