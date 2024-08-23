@@ -56,3 +56,10 @@ jobs:
         subject-name: ${{ env.IMAGE_NAME }}
         subject-digest: ${{ steps.push.outputs.digest }}
         push-to-registry: true
+
+    - name: Delete old packages
+      uses: actions/delete-package-versions@v5
+      with:
+        package-name: ${{ env.IMAGE_NAME }}
+        package-type: 'docker'
+        min-versions-to-keep: 2
