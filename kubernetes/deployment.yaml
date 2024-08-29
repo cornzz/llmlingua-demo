@@ -29,8 +29,8 @@ spec:
           volumeMounts:
             - name: flagged-data
               mountPath: /demo/flagged
-            - name: cache
-              mountPath: /demo/cache
+            # - name: cache
+            #   mountPath: /demo/cache
           env:
             - name: APP_PATH
               value: /compress
@@ -59,6 +59,6 @@ spec:
         - name: flagged-data
           persistentVolumeClaim:
             claimName: llmlingua-demo-data
-        - name: cache
-          persistentVolumeClaim:
-            claimName: llmlingua-demo-cache
+        # - name: cache
+        #   persistentVolumeClaim:
+        #     claimName: llmlingua-demo-cache
