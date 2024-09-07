@@ -198,22 +198,21 @@ def run_demo(
 
 
 with gr.Blocks(
-    title="LLMLingua Demo", css=os.path.join(BASE_DIR, "app.css"), js=os.path.join(BASE_DIR, "app.js")
+    title="LLMLingua-2 Demo", css=os.path.join(BASE_DIR, "app.css"), js=os.path.join(BASE_DIR, "app.js")
 ) as demo:
-    gr.Markdown("# Prompt Compression A/B Test")
+    gr.Markdown("# Prompt Compression Demo")
     with gr.Accordion("About this demo (please read):", open=False, elem_classes="accordion"):
         gr.Markdown(
-            "Your prompt is sent to a target LLM for completion, both in its uncompressed form and compressed using [LLMLingua-2](https://llmlingua.com/llmlingua2.html). Evaluate the responses and select the better one."
+            "Your prompt is sent to a target LLM for completion, both in its uncompressed form and compressed using [LLMLingua-2](https://llmlingua.com/llmlingua2.html). Evaluate the responses and select which one you prefer."
         )
         gr.Markdown(
             f"""
                 Notes:
-                - The order of the responses (compressed / uncompressed prompt) is randomized.
-                - Compression time is included in the compressed end-to-end latency. {'Compression is done on a CPU. Using a GPU would be faster.' if not (MPS_AVAILABLE or CUDA_AVAILABLE) else 'Compression is done on a GPU using MPS.' if MPS_AVAILABLE else f'Compression is done on a GPU ({torch.cuda.get_device_name()}).'}
-                - The example prompts provided below were taken from the [LLMLingua-2 Demo](https://huggingface.co/spaces/microsoft/llmlingua-2). Click on a question to autofill the separate, uncompressed question field.
-                - Uncompressed and compressed prompts are processed simultaneously. Thus, and due to other variables, the end-to-end latencies may not be very meaningful.
-                - Token counts are calculated based on the [`cl100k_base` tokenizer](https://platform.openai.com/tokenizer) (GPT-3.5/-4) and may vary for different target models. Saving metric is based on an API pricing of $0.03 / 1000 tokens.
+                - The order of the responses (prompt compressed / uncompressed) is randomized. Compression is performed {'on a CPU. Using a GPU would be faster.' if not (MPS_AVAILABLE or CUDA_AVAILABLE) else f'on a GPU {"using MPS." if MPS_AVAILABLE else f"on a GPU ({torch.cuda.get_device_name()})."}'}
                 - LLMLingua-2 is a task-agnostic compression model, the value of the question field is not considered in the compression process.
+                - The example prompts were (mostly) taken from the [MeetingBank-QA-Summary](https://huggingface.co/datasets/microsoft/MeetingBank-QA-Summary) dataset. Click on a question to autofill the question field.
+                - Token counts are calculated using the [cl100k_base tokenizer](https://platform.openai.com/tokenizer) (GPT-3.5/-4), actual counts may vary for different target models. The saving metric is based on an API pricing of $0.03 / 1000 tokens.
+                - End-to-end latency: latency from submission to full response, including compression. While shown for reference, it is, by itself, not a good metric for evaluating the effectiveness of compression.
             """,
             elem_id="notes",
         )
