@@ -248,7 +248,7 @@ with gr.Blocks(
         label="Question",
         lines=1,
         max_lines=1,
-        placeholder="Who recommended the passage of Docket 1239?",
+        placeholder=example_dataset[1]["QA_pairs"][6][0],
         elem_classes="question-target",
     )
     context = gr.Textbox(
@@ -256,7 +256,7 @@ with gr.Blocks(
         lines=8,
         max_lines=8,
         autoscroll=False,
-        placeholder=example_dataset[3]["original_prompt"],
+        placeholder=example_dataset[1]["original_prompt"],
         elem_classes="word-count",
     )
     rate = gr.Slider(0.1, 1, 0.5, step=0.05, label="Rate")
