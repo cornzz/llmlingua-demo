@@ -131,6 +131,15 @@ button.diff-button::after {
     content: "Toggle diff";
 }
 
-.center {
-    text-align: center;
+.source {
+    float: right;
+}
+
+.source svg {
+    width: 20px;
+    margin-top: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+    .source svg path { fill: white; }
 }
