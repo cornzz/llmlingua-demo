@@ -310,6 +310,7 @@ with gr.Blocks(
         type="index",
         elem_id="examples",
     )
+    gr.Markdown("Source: [GitHub](https://github.com/cornzz/llmlingua-demo)", elem_classes="center")
 
     # Event handlers
     prompt.change(activate_button, inputs=prompt, outputs=submit)

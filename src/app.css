@@ -130,3 +130,7 @@ button.diff-button:hover {
 button.diff-button::after {
     content: "Toggle diff";
 }
+
+.center {
+    text-align: center;
+}
