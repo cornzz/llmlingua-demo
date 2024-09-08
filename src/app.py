@@ -178,13 +178,12 @@ def run_demo(
         metrics["Compression"] = [f"{compression_time:.2f}s"]
         return compressed, diff, metrics, None, None, None, None
 
+    get_query = lambda ctx: f"{prompt}\n\n{ctx}" if prompt else ctx
     with ThreadPoolExecutor() as executor:
-        future_original = executor.submit(
-            call_llm_api, "\n\n".join([prompt, context]) if prompt else context, target_model
-        )
-        compressed, diff, metrics, compression_time = compress_prompt(context, rate, force_tokens, bool(force_digits))
-        res_compressed = call_llm_api("\n\n".join([prompt, compressed]) if prompt else compressed, target_model, True)
-        res_original = future_original.result()
+        future_original = executor.submit(call_llm_api, get_query(context), target_model)
+    compressed, diff, metrics, compression_time = compress_prompt(context, rate, force_tokens, bool(force_digits))
+    res_compressed = call_llm_api(get_query(compressed), target_model, True)
+    res_original = future_original.result()
 
     end_to_end_original = res_original["obj"]["call_time"]
     end_to_end_compressed = res_compressed["obj"]["call_time"] + compression_time
@@ -312,8 +311,7 @@ with gr.Blocks(
     )
 
     # Event handlers
-    prompt.change(activate_button, inputs=[prompt, context], outputs=submit)
-    context.change(activate_button, inputs=[prompt, context], outputs=submit)
+    context.change(activate_button, inputs=context, outputs=submit)
     submit.click(
         run_demo,
         inputs=[prompt, context, rate, target_model, force_tokens, force_digits],
@@ -366,7 +364,7 @@ with gr.Blocks(
         args = [prompt, context, compr_prompt, rate, metrics, res_a_obj, res_b_obj]
         flagging_callback.flag(args, flag_option=flag_button[0], username=request.cookies["session"])
         gr.Info("Preference saved. Thank you for your feedback.")
-        return [activate_button(False)] * 3
+        return [gr.Button(interactive=False)] * 3
 
     FLAG_COMPONENTS = [prompt, context, compressed, rate, metrics, response_a_obj, response_b_obj]
     flagging_callback.setup(FLAG_COMPONENTS, FLAG_DIRECTORY)

@@ -60,8 +60,8 @@ def create_metrics_df(result: dict = None) -> pd.DataFrame:
     return df
 
 
-def activate_button(*values) -> gr.Button:
-    return gr.Button(interactive=any(bool(value) for value in values))
+def activate_button(value: str) -> gr.Button:
+    return gr.Button(interactive=bool(value))
 
 
 def handle_ui_settings(value: list[str]) -> tuple[gr.Textbox, gr.Textbox, gr.HighlightedText, gr.DataFrame]:
