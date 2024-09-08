@@ -65,10 +65,10 @@ def activate_button(value: str) -> gr.Button:
 
 
 def handle_ui_settings(value: list[str]) -> tuple[gr.Textbox, gr.Textbox, gr.HighlightedText, gr.DataFrame]:
-    show_question = "Show Separate Context Field" in value
+    show_question = "Show Question Field" in value
     return (
         gr.Textbox(visible=True) if show_question else gr.Textbox(visible=False, value=None),
-        gr.Textbox(label="Context" if show_question else "Prompt"),
+        gr.Textbox(label="Prompt (Context)" if show_question else "Prompt"),
         gr.HighlightedText(visible="Show Compressed Prompt" in value),
         gr.DataFrame(visible="Show Metrics" in value),
     )
@@ -149,7 +149,12 @@ def prepare_flagged_data(data: pd.DataFrame):
         )
         data["Metrics"] = data["Metrics"].apply(lambda x: metrics_to_df(json.loads(x)).to_html(index=False))
     data = data.rename(
-        columns={"Response A": "Compressed", "Response B": "Uncompressed", "username": "user", "timestamp": "time"}
+        columns={
+            "Response A": "Compressed Response",
+            "Response B": "Uncompressed Response",
+            "username": "user",
+            "timestamp": "time",
+        }
     )
     return data.iloc[::-1].to_html(table_id="table")
 
