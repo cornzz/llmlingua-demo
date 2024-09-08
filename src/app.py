@@ -203,6 +203,7 @@ with gr.Blocks(
     css=os.path.join(BASE_DIR, "app.css"),
     js=os.path.join(BASE_DIR, "app.js"),
     head='<link rel="icon" href="favicon.ico">',
+    analytics_enabled=False,
 ) as demo:
     gr.Markdown(
         f'# Prompt Compression Demo <a class="source" href="https://github.com/cornzz/llmlingua-demo" target="_blank">{GH_LOGO}</span>'
