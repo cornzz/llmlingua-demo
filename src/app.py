@@ -284,6 +284,7 @@ with gr.Blocks(
         height=90,
         show_label=False,
         interactive=False,
+        elem_classes="metrics",
     )
     compressed = gr.Textbox(label="Compressed Prompt", lines=2, max_lines=2, visible=False, interactive=False)
     compressedDiff = gr.HighlightedText(

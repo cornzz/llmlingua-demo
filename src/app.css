@@ -46,6 +46,11 @@ textarea::placeholder {
     padding: 2px 8px;
 }
 
+/* Metrics Datatable */
+.metrics * {
+    overflow-y: hidden;
+}
+
 /* Examples component */
 #examples .label {
     display: none;
