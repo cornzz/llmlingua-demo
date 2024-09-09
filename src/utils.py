@@ -112,7 +112,6 @@ def get_message(response: dict) -> str:
 
 def create_llm_response(response: requests.Response, compressed: bool, start: float, end: float):
     response = response.json()
-    print(response)
     error = "error" in response and response["error"]
     obj = {
         "compressed": compressed,
