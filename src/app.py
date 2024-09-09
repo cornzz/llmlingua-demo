@@ -144,9 +144,7 @@ def call_llm_api(prompt: str, model: str, compressed: bool = False):
     )
     start = time.time()
     response = requests.post(f"{LLM_ENDPOINT}/chat/completions", headers=headers, data=data)
-    if response.status_code != 200:
-        gr.Warning(f"Error calling LLM API: {response.status_code} - {response.text}")
-    return create_llm_response(response, compressed, response.status_code != 200, start, end=time.time())
+    return create_llm_response(response, compressed, start, end=time.time())
 
 
 def compress_prompt(prompt: str, rate: float, force_tokens: list[str], force_digits: bool):
@@ -198,8 +196,14 @@ def run_demo(
     metrics["End-to-end Latency Compressed (Speedup)"] = [
         f"{end_to_end_compressed:.2f}s ({end_to_end_original / end_to_end_compressed:.2f}x)"
     ]
+    error = res_original["obj"]["error"] or res_compressed["obj"]["error"]
     res_original["obj"], res_compressed["obj"] = json.dumps(res_original["obj"]), json.dumps(res_compressed["obj"])
-    return compressed, diff, metrics, *shuffle_and_flatten(res_original, res_compressed)
+    return [
+        compressed,
+        diff,
+        metrics,
+        *shuffle_and_flatten(res_original, res_compressed),
+    ] + [gr.Button(interactive=not error)] * 3
 
 
 with gr.Blocks(
@@ -328,10 +332,23 @@ with gr.Blocks(
     submit.click(
         run_demo,
         inputs=[question, prompt, rate, target_model, force_tokens, force_digits],
-        outputs=[compressed, compressedDiff, metrics, response_a, response_a_obj, response_b, response_b_obj],
+        outputs=[
+            compressed,
+            compressedDiff,
+            metrics,
+            response_a,
+            response_a_obj,
+            response_b,
+            response_b_obj,
+            flag_a,
+            flag_n,
+            flag_b,
+        ],
     )
     clear.click(
-        lambda: [None] * 8 + [0.5, create_metrics_df(), gr.DataFrame(visible=False)],
+        lambda: [None] * 8
+        + [0.5, create_metrics_df(), gr.DataFrame(visible=False)]
+        + [gr.Button(interactive=False)] * 3,
         outputs=[
             question,
             prompt,
@@ -344,16 +361,18 @@ with gr.Blocks(
             rate,
             metrics,
             qa_pairs,
+            flag_a,
+            flag_n,
+            flag_b,
         ],
     )
-    ui_settings.change(handle_ui_settings, inputs=[ui_settings, target_model], outputs=[question, prompt, compressedDiff, metrics])
+    ui_settings.change(
+        handle_ui_settings, inputs=[ui_settings, target_model], outputs=[question, prompt, compressedDiff, metrics]
+    )
     target_model.change(handle_model_change, inputs=[target_model, ui_settings], outputs=[compressedDiff, responses])
     compressed.change(lambda x: update_label(x, compressedDiff), inputs=compressed, outputs=compressedDiff)
     response_a.change(lambda x: update_label(x, response_a), inputs=response_a, outputs=response_a)
     response_b.change(lambda x: update_label(x, response_b), inputs=response_b, outputs=response_b)
-    response_a.change(activate_button, inputs=response_a, outputs=flag_a)
-    response_a.change(activate_button, inputs=response_a, outputs=flag_n)
-    response_b.change(activate_button, inputs=response_b, outputs=flag_b)
     examples.select(
         lambda idx: (
             None,

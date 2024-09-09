@@ -101,25 +101,28 @@ def shuffle_and_flatten(original: dict[str, object], compressed: dict[str, objec
     return (x for xs in responses for x in xs.values())
 
 
-def get_message(response: dict):
+def get_message(response: dict) -> str:
     if "choices" in response:
         return response["choices"][0]["message"]["content"]
-    else:
-        return f'{response["status"]} - {response["error"]}'
+    elif "error" in response:
+        res_text = f'Error calling LLM API: {response["code"]} - {response["error"]}'
+        gr.Warning(res_text)
+        return res_text
 
 
-def create_llm_response(response: requests.Response, compressed: bool, error: bool, start: float, end: float):
-    if not error:
-        response = response.json()
+def create_llm_response(response: requests.Response, compressed: bool, start: float, end: float):
+    response = response.json()
+    print(response)
+    error = "error" in response and response["error"]
     obj = {
         "compressed": compressed,
         "call_time": end - start,
-        "error": response.text if error else None,
-        "status": response.status_code if error else None,
+        "error": error["message"]["error"] if error else False,
+        "code": error["code"] if error else 200,
     }
     if not error:
         obj.update(response)
-    return {"text": get_message(response) if not error else response.text, "obj": obj}
+    return {"text": get_message(obj), "obj": obj}
 
 
 def metrics_to_df(metrics: dict):
