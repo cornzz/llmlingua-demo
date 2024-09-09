@@ -7,6 +7,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Annotated
 
+from fastapi.staticfiles import StaticFiles
 import gradio as gr
 import pandas as pd
 import requests
@@ -129,6 +130,9 @@ def get_logs(log_name: str, credentials: Annotated[HTTPBasicCredentials, Depends
         return StreamingResponse(stream_file(log_path), media_type="text/plain")
 
 
+app.mount("/fonts", StaticFiles(directory="fonts"), name="fonts")
+
+
 def call_llm_api(prompt: str, model: str, compressed: bool = False):
     headers = {"Content-Type": "application/json", "Authorization": f"Bearer {LLM_TOKEN or 'no-key'}"}
     data = json.dumps(
@@ -204,9 +208,10 @@ with gr.Blocks(
     js=os.path.join(BASE_DIR, "app.js"),
     head='<link rel="icon" href="favicon.ico">',
     analytics_enabled=False,
+    theme=gr.themes.Default(font="Source Sans 3", font_mono="IBM Plex Mono"),
 ) as demo:
     gr.Markdown(
-        f'# Prompt Compression Demo <a class="source" href="https://github.com/cornzz/llmlingua-demo" target="_blank">{GH_LOGO}</span>'
+        f'# Prompt Compression Demo <a class="source" href="https://github.com/cornzz/llmlingua-demo" target="_blank">{GH_LOGO}</a>'
     )
     with gr.Accordion("About this demo (please read):", open=False, elem_classes="accordion"):
         gr.Markdown(

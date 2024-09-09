@@ -141,5 +141,44 @@ button.diff-button::after {
 }
 
 @media (prefers-color-scheme: dark) {
-    .source svg path { fill: white; }
+    .source svg path {
+        fill: white;
+    }
+}
+
+/* Fonts */
+/* source-sans-3-regular - latin */
+@font-face {
+    font-display: swap;
+    font-family: 'Source Sans 3';
+    font-style: normal;
+    font-weight: 400;
+    src: url('./fonts/source-sans-3-v15-latin-regular.woff2') format('woff2');
+}
+
+/* source-sans-3-600 - latin */
+@font-face {
+    font-display: swap;
+    font-family: 'Source Sans 3';
+    font-style: normal;
+    font-weight: 600;
+    src: url('./fonts/source-sans-3-v15-latin-600.woff2') format('woff2');
+}
+
+/* ibm-plex-mono-regular - latin */
+@font-face {
+    font-display: swap;
+    font-family: 'IBM Plex Mono';
+    font-style: normal;
+    font-weight: 400;
+    src: url('./fonts/ibm-plex-mono-v19-latin-regular.woff2') format('woff2');
+}
+
+/* ibm-plex-mono-600 - latin */
+@font-face {
+    font-display: swap;
+    font-family: 'IBM Plex Mono';
+    font-style: normal;
+    font-weight: 600;
+    src: url('./fonts/ibm-plex-mono-v19-latin-600.woff2') format('woff2');
 }
