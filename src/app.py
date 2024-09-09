@@ -219,7 +219,6 @@ with gr.Blocks(
         )
         gr.Markdown(
             f"""
-                Notes:
                 - The order of the responses (prompt compressed / uncompressed) is randomized. Compression is performed {'on a CPU. Using a GPU would be faster.' if not (MPS_AVAILABLE or CUDA_AVAILABLE) else f'on a GPU {"using MPS." if MPS_AVAILABLE else f"({torch.cuda.get_device_name()})."}'}
                 - LLMLingua-2 is a task-agnostic compression model, the value of the question field is not considered in the compression process.
                 - The example prompts were (mostly) taken from the [MeetingBank-QA-Summary](https://huggingface.co/datasets/microsoft/MeetingBank-QA-Summary) dataset. Click on a question to autofill the question field.
@@ -281,10 +280,10 @@ with gr.Blocks(
         label="Metrics",
         headers=[*create_metrics_df().columns],
         row_count=1,
-        height=90,
+        height=75,
         show_label=False,
         interactive=False,
-        elem_classes="metrics",
+        elem_classes="dataframe",
     )
     compressed = gr.Textbox(label="Compressed Prompt", lines=2, max_lines=2, visible=False, interactive=False)
     compressedDiff = gr.HighlightedText(
@@ -313,7 +312,7 @@ with gr.Blocks(
     qa_pairs = gr.Dataframe(
         label="GPT-4 generated QA pairs related to the selected example prompt:",
         headers=["Question (click to select)", "Answer"],
-        elem_classes="qa-pairs",
+        elem_classes="qa-pairs dataframe",
         visible=False,
     )
     examples = gr.Dataset(
