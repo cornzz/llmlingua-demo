@@ -347,7 +347,7 @@ with gr.Blocks(
             qa_pairs,
         ],
     )
-    ui_settings.change(handle_ui_settings, inputs=ui_settings, outputs=[question, prompt, compressedDiff, metrics])
+    ui_settings.change(handle_ui_settings, inputs=[ui_settings, target_model], outputs=[question, prompt, compressedDiff, metrics])
     target_model.change(handle_model_change, inputs=[target_model, ui_settings], outputs=[compressedDiff, responses])
     compressed.change(lambda x: update_label(x, compressedDiff), inputs=compressed, outputs=compressedDiff)
     response_a.change(lambda x: update_label(x, response_a), inputs=response_a, outputs=response_a)

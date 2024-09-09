@@ -64,12 +64,15 @@ def activate_button(value: str) -> gr.Button:
     return gr.Button(interactive=bool(value))
 
 
-def handle_ui_settings(value: list[str]) -> tuple[gr.Textbox, gr.Textbox, gr.HighlightedText, gr.DataFrame]:
+def handle_ui_settings(
+    value: list[str], target_model: str
+) -> tuple[gr.Textbox, gr.Textbox, gr.HighlightedText, gr.DataFrame]:
     show_question = "Show Question Field" in value
+    show_compressed = "Show Compressed Prompt" in value or target_model == "Compress only"
     return (
         gr.Textbox(visible=True) if show_question else gr.Textbox(visible=False, value=None),
         gr.Textbox(label="Prompt (Context)" if show_question else "Prompt"),
-        gr.HighlightedText(visible="Show Compressed Prompt" in value),
+        gr.HighlightedText(visible=show_compressed),
         gr.DataFrame(visible="Show Metrics" in value),
     )
 
