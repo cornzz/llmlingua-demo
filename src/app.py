@@ -220,7 +220,7 @@ with gr.Blocks(
         gr.Markdown(
             f"""
                 Notes:
-                - The order of the responses (prompt compressed / uncompressed) is randomized. Compression is performed {'on a CPU. Using a GPU would be faster.' if not (MPS_AVAILABLE or CUDA_AVAILABLE) else f'on a GPU {"using MPS." if MPS_AVAILABLE else f"on a GPU ({torch.cuda.get_device_name()})."}'}
+                - The order of the responses (prompt compressed / uncompressed) is randomized. Compression is performed {'on a CPU. Using a GPU would be faster.' if not (MPS_AVAILABLE or CUDA_AVAILABLE) else f'on a GPU {"using MPS." if MPS_AVAILABLE else f"({torch.cuda.get_device_name()})."}'}
                 - LLMLingua-2 is a task-agnostic compression model, the value of the question field is not considered in the compression process.
                 - The example prompts were (mostly) taken from the [MeetingBank-QA-Summary](https://huggingface.co/datasets/microsoft/MeetingBank-QA-Summary) dataset. Click on a question to autofill the question field.
                 - Token counts are calculated using the [cl100k_base tokenizer](https://platform.openai.com/tokenizer) (GPT-3.5/-4), actual counts may vary for different target models. The saving metric is based on an API pricing of $0.03 / 1000 tokens.
