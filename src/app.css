@@ -62,8 +62,9 @@ textarea::placeholder {
 /* HighlightedText component (compressed diff) */
 .textfield {
     line-height: 1.29;
-    max-height: 200px;
+    height: 100px;
     overflow: auto;
+    resize: vertical;
     padding: var(--input-padding);
     border: var(--input-border-width) solid var(--input-border-color);
     border-radius: var(--input-radius);
