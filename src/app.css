@@ -12,8 +12,42 @@ textarea::placeholder {
     margin-bottom: -6px;
 }
 
-.question-target label span::after {
-    content: " (optional, will not be compressed)";
+.has-info + div {
+    display: inline-block;
+}
+
+.rate .head {
+    align-items: center;
+}
+
+.rate .head::after {
+    content: "%";
+}
+
+.rate .head input {
+    margin: 0 5px 0 auto;
+    appearance: textfield;
+}
+
+/* Tabs */
+.tabs {
+    margin-bottom: -42px;
+}
+
+.tabs .tab-nav {
+    border-bottom: none;
+}
+
+.tabs button {
+    padding-bottom: 10px;
+}
+
+.tabs .tab-nav .selected {
+    background: var(--block-background-fill);
+}
+
+.tabs .tabitem {
+    opacity: 0;
 }
 
 /* Accordion component (about text) */
@@ -53,6 +87,22 @@ textarea::placeholder {
 /* Dataframes */
 .dataframe svelte-virtual-table-viewport table {
     scrollbar-width: none;
+}
+
+/* Outputs */
+.outputs {
+    border-color: var(--border-color-primary);
+}
+
+.responses > div {
+    background: transparent;
+    border: none;
+    gap: var(--layout-gap);
+}
+
+.responses .block {
+    padding: 0;
+    background: transparent;
 }
 
 /* Examples component */

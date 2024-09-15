@@ -36,7 +36,7 @@ def get_api_info() -> list[str]:
                 print(f"Error while loading models from API: {response.status_code} - {response.text}")
             else:
                 models = [model["id"] for model in response.json()["data"]]
-    return endpoint, token, models + ["Compress only"]
+    return endpoint, token, models
 
 
 def create_metrics_df(result: dict = None) -> pd.DataFrame:
@@ -77,11 +77,14 @@ def handle_ui_settings(
     )
 
 
-def handle_model_change(value: str, options: list[str]) -> tuple[gr.HighlightedText, gr.Column]:
-    compress_only = value == "Compress only"
+def handle_tabs(event: gr.SelectData, options: list[str]) -> tuple[gr.HighlightedText, gr.Column]:
+    compress_only = event.value == "Compress only"
     return (
-        gr.HighlightedText(visible="Show Compressed Prompt" in options or compress_only),
-        gr.Column(visible=not compress_only),
+        gr.Textbox(visible=not compress_only),
+        gr.Radio(visible=not compress_only),
+        gr.HighlightedText(visible=compress_only or "Show Compressed Prompt" in options),
+        gr.Row(visible=not compress_only),
+        gr.Row(visible=not compress_only),
     )
 
 

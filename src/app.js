@@ -34,7 +34,7 @@
         const ui_settings = document.querySelectorAll('.ui-settings input');
         const promptCheckbox = ui_settings[1];
         if (!promptCheckbox.checked) promptCheckbox.click();
-        const promptInput = document.querySelector('.question-target input');
+        const promptInput = document.querySelector('.question-target textarea');
         promptInput.value = event.target.innerText;
         const inputEvent = new Event("input");
         Object.defineProperty(inputEvent, "target", { value: promptInput });
@@ -52,4 +52,6 @@
         });
     });
     observer.observe(document.querySelector('.qa-pairs .table tbody'), { childList: true });
+
+    // TODO: add synchronous resize for llm response textareas
 }

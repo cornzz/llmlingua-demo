@@ -26,7 +26,7 @@ from .utils import (
     create_llm_response,
     create_metrics_df,
     get_api_info,
-    handle_model_change,
+    handle_tabs,
     handle_ui_settings,
     metrics_to_df,
     prepare_flagged_data,
@@ -173,6 +173,7 @@ def run_demo(
     force_digits: list[str],
     request: gr.Request,
 ):
+    rate = rate / 100
     print(
         f"RUN DEMO - question: {len(question.split())}, prompt: {len(prompt.split())}, rate: {rate},",
         f"model: {target_model.split('/')[-1]} - from {request.cookies['session']}",
@@ -258,54 +259,57 @@ with gr.Blocks(
                     )
 
     # Inputs
+    prompt_target, compress_only = gr.Tab("Prompt target LLM"), gr.Tab("Compress only")
     question = gr.Textbox(
         label="Question",
+        info="(will not be compressed)",
         lines=1,
         placeholder=example_dataset[1]["QA_pairs"][6][0],
         elem_classes="question-target",
     )
     prompt = gr.Textbox(
-        label="Prompt (Context)",
+        label="Prompt / Context",
         lines=8,
         max_lines=8,
         autoscroll=False,
         placeholder=example_dataset[1]["original_prompt"],
         elem_classes="word-count",
     )
-    rate = gr.Slider(0.1, 1, 0.5, step=0.05, label="Rate")
+    rate = gr.Slider(10, 100, 50, step=1, label="Rate", info="(compressed / uncompressed)", elem_classes="rate")
     target_model = gr.Radio(label="Target LLM", choices=LLM_LIST, value=LLM_LIST[0])
     with gr.Row():
         clear = gr.Button("Clear", elem_classes="clear")
         submit = gr.Button("Submit", variant="primary", interactive=False)
 
     # Outputs
-    metrics = gr.Dataframe(
-        label="Metrics",
-        headers=[*create_metrics_df().columns],
-        row_count=1,
-        height=75,
-        show_label=False,
-        interactive=False,
-        elem_classes="dataframe",
-    )
-    compressed = gr.Textbox(label="Compressed Prompt", lines=2, max_lines=2, visible=False, interactive=False)
-    compressedDiff = gr.HighlightedText(
-        label="Compressed Prompt",
-        visible=False,
-        show_inline_category=False,
-        combine_adjacent=True,
-        adjacent_separator=DiffSeparator(" "),
-        color_map={"+": "green"},
-        elem_id="compressed-diff",
-        elem_classes="no-content",
-    )
-    with gr.Column(variant="panel") as responses:
-        with gr.Row():
+    gr.Markdown("## Results:")
+    with gr.Column(variant="panel", elem_classes="outputs"):
+        metrics = gr.Dataframe(
+            label="Metrics",
+            headers=[*create_metrics_df().columns],
+            row_count=1,
+            height=75,
+            show_label=False,
+            interactive=False,
+            elem_classes="dataframe",
+        )
+        compressed = gr.Textbox(label="Compressed Prompt", lines=2, max_lines=2, visible=False, interactive=False)
+        compressedDiff = gr.HighlightedText(
+            label="Compressed Prompt",
+            visible=False,
+            show_inline_category=False,
+            combine_adjacent=True,
+            adjacent_separator=DiffSeparator(" "),
+            color_map={"+": "green"},
+            elem_id="compressed-diff",
+            elem_classes="no-content",
+        )
+        with gr.Row(elem_classes="responses") as responses:
             response_a = gr.Textbox(label="LLM Response A", lines=10, max_lines=10, autoscroll=False, interactive=False)
             response_a_obj = gr.Textbox(label="Response A", visible=False)
             response_b = gr.Textbox(label="LLM Response B", lines=10, max_lines=10, autoscroll=False, interactive=False)
             response_b_obj = gr.Textbox(label="Response B", visible=False)
-        with gr.Row():
+        with gr.Row() as flag_buttons:
             flag_a = gr.Button("A is better", interactive=False)
             flag_n = gr.Button("Neither is better", interactive=False)
             flag_b = gr.Button("B is better", interactive=False)
@@ -327,6 +331,10 @@ with gr.Blocks(
     )
 
     # Event handlers
+    for tab in [prompt_target, compress_only]:
+        tab.select(
+            handle_tabs, inputs=[ui_settings], outputs=[question, target_model, compressedDiff, responses, flag_buttons]
+        )
     prompt.change(activate_button, inputs=prompt, outputs=submit)
     submit.click(
         run_demo,
@@ -346,7 +354,7 @@ with gr.Blocks(
     )
     clear.click(
         lambda: [None] * 8
-        + [0.5, create_metrics_df(), gr.DataFrame(visible=False)]
+        + [50, create_metrics_df(), gr.DataFrame(visible=False)]
         + [gr.Button(interactive=False)] * 3,
         outputs=[
             question,
@@ -368,7 +376,6 @@ with gr.Blocks(
     ui_settings.change(
         handle_ui_settings, inputs=[ui_settings, target_model], outputs=[question, prompt, compressedDiff, metrics]
     )
-    target_model.change(handle_model_change, inputs=[target_model, ui_settings], outputs=[compressedDiff, responses])
     compressed.change(lambda x: update_label(x, compressedDiff), inputs=compressed, outputs=compressedDiff)
     response_a.change(lambda x: update_label(x, response_a), inputs=response_a, outputs=response_a)
     response_b.change(lambda x: update_label(x, response_b), inputs=response_b, outputs=response_b)
@@ -392,7 +399,7 @@ with gr.Blocks(
         print(
             f"FLAG - model: {model.group(1) if model else ''}, flag: {flag_button[0]} - from {request.cookies['session']}"
         )
-        args = [prompt, context, compr_prompt, rate, metrics, res_a_obj, res_b_obj]
+        args = [prompt, context, compr_prompt, rate / 100, metrics, res_a_obj, res_b_obj]
         flagging_callback.flag(args, flag_option=flag_button[0], username=request.cookies["session"])
         gr.Info("Preference saved. Thank you for your feedback.")
         return [gr.Button(interactive=False)] * 3
