@@ -261,7 +261,6 @@ with gr.Blocks(
     question = gr.Textbox(
         label="Question",
         lines=1,
-        max_lines=1,
         placeholder=example_dataset[1]["QA_pairs"][6][0],
         elem_classes="question-target",
     )

@@ -1,10 +1,4 @@
 /* Inputs */
-input[type="text"],
-textarea {
-    min-height: 42px;
-    padding: 6px var(--input-padding);
-}
-
 input::placeholder,
 textarea::placeholder {
     opacity: 0.4;
