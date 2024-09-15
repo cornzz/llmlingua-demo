@@ -169,6 +169,7 @@ def run_demo(
     prompt: str,
     rate: float,
     target_model: str,
+    compress_only: bool,
     force_tokens: list[str],
     force_digits: list[str],
     request: gr.Request,
@@ -176,9 +177,9 @@ def run_demo(
     rate = rate / 100
     print(
         f"RUN DEMO - question: {len(question.split())}, prompt: {len(prompt.split())}, rate: {rate},",
-        f"model: {target_model.split('/')[-1]} - from {request.cookies['session']}",
+        f"model: {'Compress only' if compress_only else target_model.split('/')[-1]} - from {request.cookies['session']}",
     )
-    if target_model == "Compress only":
+    if compress_only:
         compressed, diff, metrics, compression_time = compress_prompt(prompt, rate, force_tokens, bool(force_digits))
         metrics["Compression"] = [f"{compression_time:.2f}s"]
         return [compressed, diff, metrics] + [None] * 4 + [gr.Button(interactive=False)] * 3
@@ -259,7 +260,8 @@ with gr.Blocks(
                     )
 
     # Inputs
-    prompt_target, compress_only = gr.Tab("Prompt target LLM"), gr.Tab("Compress only")
+    tab_prompt, tab_compress = gr.Tab("Prompt target LLM"), gr.Tab("Compress only")
+    compress_only = gr.State(False)
     question = gr.Textbox(
         label="Question",
         info="(will not be compressed)",
@@ -282,8 +284,8 @@ with gr.Blocks(
         submit = gr.Button("Submit", variant="primary", interactive=False)
 
     # Outputs
-    gr.Markdown("## Results:")
     with gr.Column(variant="panel", elem_classes="outputs"):
+        gr.Markdown('<h2 style="text-align: center">Results</h2>')
         metrics = gr.Dataframe(
             label="Metrics",
             headers=[*create_metrics_df().columns],
@@ -315,7 +317,7 @@ with gr.Blocks(
             flag_b = gr.Button("B is better", interactive=False)
 
     # Examples
-    gr.Markdown("## Examples (click to select)")
+    gr.Markdown('<h2 style="text-align: center">Examples</div>')
     qa_pairs = gr.Dataframe(
         label="GPT-4 generated QA pairs related to the selected example prompt:",
         headers=["Question (click to select)", "Answer"],
@@ -331,14 +333,16 @@ with gr.Blocks(
     )
 
     # Event handlers
-    for tab in [prompt_target, compress_only]:
+    for tab in [tab_prompt, tab_compress]:
         tab.select(
-            handle_tabs, inputs=[ui_settings], outputs=[question, target_model, compressedDiff, responses, flag_buttons]
+            handle_tabs,
+            inputs=[ui_settings],
+            outputs=[compress_only, question, target_model, compressedDiff, responses, flag_buttons],
         )
     prompt.change(activate_button, inputs=prompt, outputs=submit)
     submit.click(
         run_demo,
-        inputs=[question, prompt, rate, target_model, force_tokens, force_digits],
+        inputs=[question, prompt, rate, target_model, compress_only, force_tokens, force_digits],
         outputs=[
             compressed,
             compressedDiff,

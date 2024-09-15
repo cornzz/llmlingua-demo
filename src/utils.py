@@ -77,9 +77,12 @@ def handle_ui_settings(
     )
 
 
-def handle_tabs(event: gr.SelectData, options: list[str]) -> tuple[gr.HighlightedText, gr.Column]:
+def handle_tabs(
+    event: gr.SelectData, options: list[str]
+) -> tuple[bool, gr.Textbox, gr.Radio, gr.HighlightedText, gr.Row, gr.Row]:
     compress_only = event.value == "Compress only"
     return (
+        compress_only,
         gr.Textbox(visible=not compress_only),
         gr.Radio(visible=not compress_only),
         gr.HighlightedText(visible=compress_only or "Show Compressed Prompt" in options),
