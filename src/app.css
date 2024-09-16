@@ -119,28 +119,31 @@ textarea::placeholder {
 }
 
 /* HighlightedText component (compressed diff) */
-.textfield {
-    line-height: 1.29;
-    height: 100px;
+#compressed-diff .container {
+    padding: 0;
+}
+
+#compressed-diff .textfield {
+    height: 108px;
+    min-height: 108px;
     overflow: auto;
     scrollbar-width: none;
     resize: vertical;
-    padding: 6px var(--input-padding);
-    border: var(--input-border-width) solid var(--input-border-color);
-    border-radius: var(--input-radius);
+    padding: var(--input-padding);
+    line-height: var(--line-sm);
 }
 
-.textfield .textspan {
+#compressed-diff .textfield .textspan {
     border-radius: 0;
     padding: 0;
     word-break: break-word;
 }
 
-.textfield .hl + .hl{
+#compressed-diff .textfield .hl + .hl{
     margin-left: 0;
 }
 
-.textfield .no-cat {
+#compressed-diff .textfield .no-cat {
     opacity: 0.3;
 }
 
@@ -170,7 +173,7 @@ textarea::placeholder {
 }
 
 #compressed-diff.no-content button {
-    display: none;
+    visibility: hidden;
 }
 
 button.diff-button {

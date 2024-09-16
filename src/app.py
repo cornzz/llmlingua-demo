@@ -295,7 +295,7 @@ with gr.Blocks(
             interactive=False,
             elem_classes="dataframe",
         )
-        compressed = gr.Textbox(label="Compressed Prompt", lines=2, max_lines=2, visible=False, interactive=False)
+        compressed = gr.Textbox(label="Compressed Prompt", visible=False)
         compressedDiff = gr.HighlightedText(
             label="Compressed Prompt",
             visible=False,
@@ -321,6 +321,7 @@ with gr.Blocks(
     qa_pairs = gr.Dataframe(
         label="GPT-4 generated QA pairs related to the selected example prompt:",
         headers=["Question (click to select)", "Answer"],
+        height=170,
         elem_classes="qa-pairs dataframe",
         visible=False,
     )
@@ -378,7 +379,7 @@ with gr.Blocks(
         ],
     )
     ui_settings.change(
-        handle_ui_settings, inputs=[ui_settings, target_model], outputs=[question, prompt, compressedDiff, metrics]
+        handle_ui_settings, inputs=[ui_settings, compress_only], outputs=[question, prompt, compressedDiff, metrics]
     )
     compressed.change(lambda x: update_label(x, compressedDiff), inputs=compressed, outputs=compressedDiff)
     response_a.change(lambda x: update_label(x, response_a), inputs=response_a, outputs=response_a)
