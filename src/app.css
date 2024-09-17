@@ -89,20 +89,23 @@ textarea::placeholder {
     scrollbar-width: none;
 }
 
-.dataframe.metrics {
+.metrics {
     border-radius: 0;
 }
 
-.dataframe .wrap {
+.metrics .wrap {
     inset: 1px;
     border-radius: calc(var(--block-radius) - 1px) calc(var(--block-radius) - 1px) 0 0;
 }
+.metrics .sort-button {
+    visibility: hidden;
+}
 
-.dataframe.metrics .table-wrap {
+.metrics .table-wrap {
     border-radius: var(--table-radius) var(--table-radius) 0 0;
 }
 
-.dataframe.qa-pairs .table-wrap {
+.qa-pairs .table-wrap {
     min-height: 170px;
     max-height: 170px;
 }
@@ -164,12 +167,6 @@ textarea::placeholder {
     border-bottom: none;
 }
 
-#compressed-diff label::after {
-    content: "▼";
-    transform: rotate(90deg);
-    transition: .15s;
-}
-
 #compressed-diff:not(.open):not(.force-open) .empty,
 #compressed-diff:not(.open):not(.force-open) .container {
     overflow: hidden;
@@ -181,8 +178,10 @@ textarea::placeholder {
     cursor: pointer;
 }
 
-#compressed-diff.force-open label::after {
-    opacity: 0;
+#compressed-diff:not(.force-open) label::after {
+    content: "▼";
+    transform: rotate(90deg);
+    transition: .15s;
 }
 
 #compressed-diff.open label::after {
@@ -225,11 +224,6 @@ textarea::placeholder {
     color: var(--body-text-color) !important;
 }
 
-#compressed-diff:not(.open):not(.force-open) button,
-#compressed-diff label:has( + .empty) .diff-button {
-    visibility: hidden;
-}
-
 button.diff-button {
     padding: 0 8px;
     margin: 0 15px 0 auto;
@@ -239,18 +233,26 @@ button.diff-button {
     border-radius: 5px;
 }
 
+button.diff-button::after {
+    content: "Toggle diff";
+}
+
 button.diff-button:hover {
     border-color: var(--button-primary-border-color-hover);
     background: var(--button-primary-background-fill-hover);
     color: var(--button-primary-text-color-hover);
 }
 
-button.diff-button::after {
-    content: "Toggle diff";
+#compressed-diff.force-open .diff-button {
+    margin-right: 0;
+}
+
+#compressed-diff:not(.open):not(.force-open) .diff-button,
+#compressed-diff label:has( + .empty) .diff-button {
+    visibility: hidden;
 }
 
 /* GitHub icon */
-
 .source {
     float: right;
 }

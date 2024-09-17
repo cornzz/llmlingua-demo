@@ -281,6 +281,7 @@ with gr.Blocks(
             headers=[*create_metrics_df().columns],
             row_count=1,
             height=75,
+            column_widths=["17.8%", "6.8%", "6.1%", "12.3%", "11%", "15.7%", "30.3%"],
             show_label=False,
             interactive=False,
             elem_classes="metrics dataframe",
