@@ -237,10 +237,7 @@ with gr.Blocks(
             with gr.Column():
                 gr.Markdown("UI Settings")
                 ui_settings = gr.CheckboxGroup(
-                    ["Show Metrics", "Show Question Field", "Show Compressed Prompt"],
-                    container=False,
-                    value=["Show Metrics", "Show Question Field"],
-                    elem_classes="ui-settings",
+                    ["Show Metrics"], container=False, value=["Show Metrics"], elem_classes="ui-settings"
                 )
             with gr.Column():
                 gr.Markdown("Tokens to Preserve")
@@ -260,7 +257,7 @@ with gr.Blocks(
                     )
 
     # Inputs
-    tab_prompt, tab_compress = gr.Tab("Prompt target LLM"), gr.Tab("Compress only")
+    tab_prompt, tab_compress = gr.Tab("Prompt target LLM", id=0), gr.Tab("Compress only", id=1)
     compress_only = gr.State(False)
     question = gr.Textbox(
         label="Question",
@@ -293,19 +290,17 @@ with gr.Blocks(
             height=75,
             show_label=False,
             interactive=False,
-            elem_classes="dataframe",
+            elem_classes="metrics dataframe",
         )
-        compressed = gr.Textbox(label="Compressed Prompt", visible=False)
         compressedDiff = gr.HighlightedText(
             label="Compressed Prompt",
-            visible=False,
             show_inline_category=False,
             combine_adjacent=True,
             adjacent_separator=DiffSeparator(" "),
             color_map={"+": "green"},
             elem_id="compressed-diff",
-            elem_classes="no-content",
         )
+        compressed = gr.Textbox(label="Compressed Prompt", visible=False)
         with gr.Row(elem_classes="responses") as responses:
             response_a = gr.Textbox(label="LLM Response A", lines=10, max_lines=10, autoscroll=False, interactive=False)
             response_a_obj = gr.Textbox(label="Response A", visible=False)
@@ -321,7 +316,6 @@ with gr.Blocks(
     qa_pairs = gr.Dataframe(
         label="GPT-4 generated QA pairs related to the selected example prompt:",
         headers=["Question (click to select)", "Answer"],
-        height=170,
         elem_classes="qa-pairs dataframe",
         visible=False,
     )
@@ -335,12 +329,8 @@ with gr.Blocks(
 
     # Event handlers
     for tab in [tab_prompt, tab_compress]:
-        tab.select(
-            handle_tabs,
-            inputs=[ui_settings],
-            outputs=[compress_only, question, target_model, compressedDiff, responses, flag_buttons],
-        )
-    prompt.change(activate_button, inputs=prompt, outputs=submit)
+        tab.select(handle_tabs, outputs=[compress_only, question, target_model, responses, flag_buttons], js="openDiff")
+    prompt.change(activate_button, inputs=[prompt], outputs=[submit])
     submit.click(
         run_demo,
         inputs=[question, prompt, rate, target_model, compress_only, force_tokens, force_digits],
@@ -378,12 +368,10 @@ with gr.Blocks(
             flag_b,
         ],
     )
-    ui_settings.change(
-        handle_ui_settings, inputs=[ui_settings, compress_only], outputs=[question, prompt, compressedDiff, metrics]
-    )
-    compressed.change(lambda x: update_label(x, compressedDiff), inputs=compressed, outputs=compressedDiff)
-    response_a.change(lambda x: update_label(x, response_a), inputs=response_a, outputs=response_a)
-    response_b.change(lambda x: update_label(x, response_b), inputs=response_b, outputs=response_b)
+    ui_settings.change(handle_ui_settings, inputs=[ui_settings], outputs=[metrics])
+    compressed.change(lambda x: update_label(x, compressedDiff), inputs=[compressed], outputs=[compressedDiff])
+    response_a.change(lambda x: update_label(x, response_a), inputs=[response_a], outputs=[response_a])
+    response_b.change(lambda x: update_label(x, response_b), inputs=[response_b], outputs=[response_b])
     examples.select(
         lambda idx: (
             None,
@@ -394,7 +382,7 @@ with gr.Blocks(
                 else gr.DataFrame(visible=False)
             ),
         ),
-        inputs=examples,
+        inputs=[examples],
         outputs=[question, prompt, qa_pairs],
     )
 

@@ -64,28 +64,16 @@ def activate_button(value: str) -> gr.Button:
     return gr.Button(interactive=bool(value))
 
 
-def handle_ui_settings(
-    value: list[str], compress_only: bool
-) -> tuple[gr.Textbox, gr.Textbox, gr.HighlightedText, gr.DataFrame]:
-    show_question = "Show Question Field" in value
-    show_compressed = "Show Compressed Prompt" in value or compress_only
-    return (
-        gr.Textbox(visible=True) if show_question else gr.Textbox(visible=False, value=None),
-        gr.Textbox(label="Prompt (Context)" if show_question else "Prompt"),
-        gr.HighlightedText(visible=show_compressed),
-        gr.DataFrame(visible="Show Metrics" in value),
-    )
+def handle_ui_settings(value: list[str]) -> gr.DataFrame:
+    return gr.DataFrame(visible="Show Metrics" in value)
 
 
-def handle_tabs(
-    event: gr.SelectData, options: list[str]
-) -> tuple[bool, gr.Textbox, gr.Radio, gr.HighlightedText, gr.Row, gr.Row]:
+def handle_tabs(event: gr.SelectData) -> tuple[bool, gr.Textbox, gr.Radio, gr.Row, gr.Row]:
     compress_only = event.value == "Compress only"
     return (
         compress_only,
         gr.Textbox(visible=not compress_only),
         gr.Radio(visible=not compress_only),
-        gr.HighlightedText(visible=compress_only or "Show Compressed Prompt" in options),
         gr.Row(visible=not compress_only),
         gr.Row(visible=not compress_only),
     )
@@ -94,11 +82,7 @@ def handle_tabs(
 def update_label(content: str, component: gr.Textbox | gr.HighlightedText) -> gr.Textbox | gr.HighlightedText:
     words = len(content.split())
     new_label = component.label.split(" (")[0] + (f" ({words} words)" if words else "")
-    return (
-        gr.Textbox(label=new_label)
-        if isinstance(component, gr.Textbox)
-        else gr.HighlightedText(label=new_label, elem_classes="no-content" if not words else "")
-    )
+    return gr.Textbox(label=new_label) if isinstance(component, gr.Textbox) else gr.HighlightedText(label=new_label)
 
 
 def shuffle_and_flatten(original: dict[str, object], compressed: dict[str, object]):

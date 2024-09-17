@@ -22,18 +22,20 @@
         }, 300));
     });
 
-    // Hide diff button
+    // Compressed diff
     const diff = document.getElementById('compressed-diff');
+    const diffLabel = diff.querySelector('label')
+    diffLabel.addEventListener('click', ({ target }) =>
+        !target.classList.contains('diff-button') && diff.classList.toggle('open')
+    );
     const diffButton = document.createElement('button');
     diffButton.classList.add('diff-button');
-    diff.querySelector('label').appendChild(diffButton);
     diffButton.addEventListener('click', () => diff.classList.toggle('show-diff'));
+    diffLabel.appendChild(diffButton);
+    window.openDiff = () => diff.classList.toggle('force-open');
 
     // Question click handler
     const handleQuestionClick = (event) => {
-        const ui_settings = document.querySelectorAll('.ui-settings input');
-        const promptCheckbox = ui_settings[1];
-        if (!promptCheckbox.checked) promptCheckbox.click();
         const promptInput = document.querySelector('.question-target textarea');
         promptInput.value = event.target.innerText;
         const inputEvent = new Event("input");
@@ -53,5 +55,5 @@
     });
     observer.observe(document.querySelector('.qa-pairs .table tbody'), { childList: true });
 
-    // TODO: add synchronous resize for llm response textareas
+    // TODO: add synchronized resize for llm response textareas
 }

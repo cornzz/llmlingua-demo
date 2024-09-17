@@ -89,6 +89,24 @@ textarea::placeholder {
     scrollbar-width: none;
 }
 
+.dataframe.metrics {
+    border-radius: 0;
+}
+
+.dataframe .wrap {
+    inset: 1px;
+    border-radius: calc(var(--block-radius) - 1px) calc(var(--block-radius) - 1px) 0 0;
+}
+
+.dataframe.metrics .table-wrap {
+    border-radius: var(--table-radius) var(--table-radius) 0 0;
+}
+
+.dataframe.qa-pairs .table-wrap {
+    min-height: 170px;
+    max-height: 170px;
+}
+
 /* Outputs */
 .outputs {
     border-color: var(--border-color-primary);
@@ -119,13 +137,61 @@ textarea::placeholder {
 }
 
 /* HighlightedText component (compressed diff) */
+#compressed-diff {
+    margin-top: calc(var(--layout-gap) * -1 - 1px);
+    overflow: hidden !important;
+    border-radius: 0 0 var(--block-radius) var(--block-radius);
+}
+
+#compressed-diff .wrap {
+    border-radius: 0;
+}
+
+#compressed-diff .empty {
+    margin-top: 0;
+    min-height: 90px;
+}
+
 #compressed-diff .container {
     padding: 0;
 }
 
+#compressed-diff label {
+    pointer-events: initial;
+    width: 100%;
+    border-right: none;
+    border-radius: 0;
+    border-bottom: none;
+}
+
+#compressed-diff label::after {
+    content: "▼";
+    transform: rotate(90deg);
+    transition: .15s;
+}
+
+#compressed-diff:not(.open):not(.force-open) .empty,
+#compressed-diff:not(.open):not(.force-open) .container {
+    overflow: hidden;
+    height: 0;
+    min-height: 0;
+}
+
+#compressed-diff:not(.force-open) label {
+    cursor: pointer;
+}
+
+#compressed-diff.force-open label::after {
+    opacity: 0;
+}
+
+#compressed-diff.open label::after {
+    transform: rotate(0);
+}
+
 #compressed-diff .textfield {
-    height: 108px;
-    min-height: 108px;
+    height: 90px;
+    min-height: 90px;
     overflow: auto;
     scrollbar-width: none;
     resize: vertical;
@@ -139,25 +205,12 @@ textarea::placeholder {
     word-break: break-word;
 }
 
-#compressed-diff .textfield .hl + .hl{
+#compressed-diff .textfield .hl + .hl {
     margin-left: 0;
 }
 
 #compressed-diff .textfield .no-cat {
     opacity: 0.3;
-}
-
-/* Toggle diff */
-#compressed-diff label {
-    pointer-events: initial;
-    width: 100%;
-    border-right: none;
-    border-top-right-radius: calc(var(--radius-lg) - 1px);
-    border-bottom-right-radius: 0;
-}
-
-#compressed-diff .empty {
-    margin-top: 0;
 }
 
 #compressed-diff:not(.show-diff) .no-cat {
@@ -172,16 +225,16 @@ textarea::placeholder {
     color: var(--body-text-color) !important;
 }
 
-#compressed-diff.no-content button {
+#compressed-diff:not(.open):not(.force-open) button {
     visibility: hidden;
 }
 
 button.diff-button {
-    margin-left: auto;
+    padding: 0 8px;
+    margin: 0 15px 0 auto;
     border: var(--button-border-width) solid var(--button-primary-border-color);
     background: var(--button-primary-background-fill);
     color: var(--button-primary-text-color);
-    padding: 0 8px;
     border-radius: 5px;
 }
 
@@ -194,6 +247,8 @@ button.diff-button:hover {
 button.diff-button::after {
     content: "Toggle diff";
 }
+
+/* GitHub icon */
 
 .source {
     float: right;
