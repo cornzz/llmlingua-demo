@@ -64,10 +64,6 @@ def activate_button(value: str) -> gr.Button:
     return gr.Button(interactive=bool(value))
 
 
-def handle_ui_settings(value: list[str]) -> gr.DataFrame:
-    return gr.DataFrame(visible="Show Metrics" in value)
-
-
 def handle_tabs(event: gr.SelectData) -> tuple[bool, gr.Textbox, gr.Radio, gr.Row, gr.Row]:
     compress_only = event.value == "Compress only"
     return (

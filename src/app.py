@@ -27,7 +27,6 @@ from .utils import (
     create_metrics_df,
     get_api_info,
     handle_tabs,
-    handle_ui_settings,
     metrics_to_df,
     prepare_flagged_data,
     shuffle_and_flatten,
@@ -233,28 +232,22 @@ with gr.Blocks(
             """,
             elem_id="notes",
         )
-        with gr.Row(variant="compact", elem_id="settings"):
-            with gr.Column():
-                gr.Markdown("UI Settings")
-                ui_settings = gr.CheckboxGroup(
-                    ["Show Metrics"], container=False, value=["Show Metrics"], elem_classes="ui-settings"
+        with gr.Column(variant="compact", elem_classes="settings"):
+            gr.Markdown("Tokens to Preserve")
+            with gr.Row():
+                force_tokens = gr.Dropdown(
+                    show_label=False,
+                    container=False,
+                    choices=["\\n", ".", "!", "?", ","],
+                    value=["\\n"],
+                    multiselect=True,
+                    allow_custom_value=True,
+                    scale=3,
+                    elem_classes="force-tokens",
                 )
-            with gr.Column():
-                gr.Markdown("Tokens to Preserve")
-                with gr.Row():
-                    force_tokens = gr.Dropdown(
-                        show_label=False,
-                        container=False,
-                        choices=["\\n", ".", "!", "?", ","],
-                        value=["\\n"],
-                        multiselect=True,
-                        allow_custom_value=True,
-                        scale=3,
-                        elem_classes="force-tokens",
-                    )
-                    force_digits = gr.CheckboxGroup(
-                        ["Preserve Digits"], show_label=False, container=False, value=[], elem_classes="digits-checkbox"
-                    )
+                force_digits = gr.CheckboxGroup(
+                    ["Preserve Digits"], show_label=False, container=False, value=[], elem_classes="digits-checkbox"
+                )
 
     # Inputs
     tab_prompt, tab_compress = gr.Tab("Prompt target LLM", id=0), gr.Tab("Compress only", id=1)
@@ -368,7 +361,6 @@ with gr.Blocks(
             flag_b,
         ],
     )
-    ui_settings.change(handle_ui_settings, inputs=[ui_settings], outputs=[metrics])
     compressed.change(lambda x: update_label(x, compressedDiff), inputs=[compressed], outputs=[compressedDiff])
     response_a.change(lambda x: update_label(x, response_a), inputs=[response_a], outputs=[response_a])
     response_b.change(lambda x: update_label(x, response_b), inputs=[response_b], outputs=[response_b])
