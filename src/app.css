@@ -225,7 +225,8 @@ textarea::placeholder {
     color: var(--body-text-color) !important;
 }
 
-#compressed-diff:not(.open):not(.force-open) button {
+#compressed-diff:not(.open):not(.force-open) button,
+#compressed-diff label:has( + .empty) .diff-button {
     visibility: hidden;
 }
 
