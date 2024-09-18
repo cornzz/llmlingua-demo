@@ -304,16 +304,17 @@ with gr.Blocks(
             response_a_obj = gr.Textbox(label="Response A", visible=False)
             response_b = gr.Textbox(label="LLM Response B", lines=10, max_lines=10, autoscroll=False, interactive=False)
             response_b_obj = gr.Textbox(label="Response B", visible=False)
-        with gr.Row() as flag_buttons:
-            a_yes = gr.Button("✅", interactive=False)
-            a_no = gr.Button("❌", interactive=False)
-            b_yes = gr.Button("✅", interactive=False)
-            b_no = gr.Button("❌", interactive=False)
-            FLAG_BUTTONS = [a_yes, a_no, b_yes, b_no]
-        gr.Markdown(
-            '<div class="button-hint">✅ = answered your question / solved your problem'
-            "&nbsp;&nbsp;&nbsp; ❌ = did not answer your question / solve your problem.</div>"
-        )
+        with gr.Column() as flag_buttons:
+            with gr.Row():
+                a_yes = gr.Button("✅", interactive=False)
+                a_no = gr.Button("❌", interactive=False)
+                b_yes = gr.Button("✅", interactive=False)
+                b_no = gr.Button("❌", interactive=False)
+                FLAG_BUTTONS = [a_yes, a_no, b_yes, b_no]
+            gr.Markdown(
+                '<div class="button-hint">✅ = answered your question / solved your problem'
+                "&nbsp;&nbsp;&nbsp; ❌ = did not answer your question / solve your problem.</div>"
+            )
 
     # Examples
     gr.Markdown('<h2 style="text-align: center">Examples</div>')
