@@ -71,8 +71,7 @@ textarea::placeholder {
 }
 
 /* Settings */
-#settings,
-#settings > div {
+#settings {
     gap: 6px;
 }
 
@@ -124,6 +123,12 @@ textarea::placeholder {
 .responses .block {
     padding: 0;
     background: transparent;
+}
+
+.button-hint {
+    text-align: center;
+    color: var(--block-info-text-color);
+    font-size: 13px;
 }
 
 /* Examples component */

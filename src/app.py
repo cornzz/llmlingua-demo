@@ -224,19 +224,20 @@ with gr.Blocks(
     )
     with gr.Accordion("About this demo (please read):", open=False, elem_classes="accordion"):
         gr.Markdown(
-            "Your prompt is sent to a target LLM for completion, both in its uncompressed form and compressed using [LLMLingua-2](https://llmlingua.com/llmlingua2.html). Evaluate the responses and select which one you prefer."
+            "Your prompt is sent to a target LLM for completion, both in its uncompressed form and compressed using [LLMLingua-2](https://llmlingua.com/llmlingua2.html). "
+            "Evaluate the responses and give feedback for each one by clicking on the respective button below the answer."
         )
         gr.Markdown(
             f"""
-                - The order of the responses (prompt compressed / uncompressed) is randomized. Compression is performed {'on a CPU. Using a GPU would be faster.' if not (MPS_AVAILABLE or CUDA_AVAILABLE) else f'on a GPU {"using MPS." if MPS_AVAILABLE else f"({torch.cuda.get_device_name()})."}'}
-                - LLMLingua-2 is a task-agnostic compression model, the value of the question field is not considered in the compression process.
+                - **The order of the responses (prompt compressed / uncompressed) is randomized**.
+                - LLMLingua-2 is a task-agnostic compression model, the value of the question field is not considered in the compression process. Compression is performed {'on a CPU. Using a GPU would be faster.' if not (MPS_AVAILABLE or CUDA_AVAILABLE) else f'on a GPU {"using MPS." if MPS_AVAILABLE else f"({torch.cuda.get_device_name()})."}'}
                 - The example prompts were (mostly) taken from the [MeetingBank-QA-Summary](https://huggingface.co/datasets/microsoft/MeetingBank-QA-Summary) dataset. Click on a question to autofill the question field.
                 - Token counts are calculated using the [cl100k_base tokenizer](https://platform.openai.com/tokenizer) (GPT-3.5/-4), actual counts may vary for different target models. The saving metric is based on an API pricing of $0.03 / 1000 tokens.
-                - End-to-end latency: latency from submission to full response, including compression. While shown for reference, it is, by itself, not a good metric for evaluating the effectiveness of compression.
+                - End-to-end latency: latency from submission to full response, including compression. While shown for reference, this metric alone is not an effective measure of compression efficacy.
             """,
             elem_id="notes",
         )
-        with gr.Column(variant="compact", elem_classes="settings"):
+        with gr.Column(variant="compact", elem_id="settings"):
             gr.Markdown("Tokens to Preserve")
             with gr.Row():
                 force_tokens = gr.Dropdown(
@@ -309,6 +310,10 @@ with gr.Blocks(
             b_yes = gr.Button("✅", interactive=False)
             b_no = gr.Button("❌", interactive=False)
             FLAG_BUTTONS = [a_yes, a_no, b_yes, b_no]
+        gr.Markdown(
+            '<div class="button-hint">✅ = answered your question / solved your problem'
+            "&nbsp;&nbsp;&nbsp; ❌ = did not answer your question / solve your problem.</div>"
+        )
 
     # Examples
     gr.Markdown('<h2 style="text-align: center">Examples</div>')
