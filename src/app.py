@@ -181,7 +181,7 @@ def run_demo(
     if compress_only:
         compressed, diff, metrics, compression_time = compress_prompt(prompt, rate, force_tokens, bool(force_digits))
         metrics["Compression"] = [f"{compression_time:.2f}s"]
-        return [compressed, diff, metrics] + [None] * 4 + [gr.Button(interactive=not error)] * 4 + [[None, None]]
+        return [compressed, diff, metrics] + [None] * 4 + [gr.Button(interactive=False)] * 4 + [[None, None]]
 
     with ThreadPoolExecutor() as executor:
         get_query = lambda p: f"{question}\n\n{p}" if question else p
