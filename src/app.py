@@ -199,12 +199,16 @@ def run_demo(
     ]
     error = res_original["obj"]["error"] or res_compressed["obj"]["error"]
     res_original["obj"], res_compressed["obj"] = json.dumps(res_original["obj"]), json.dumps(res_compressed["obj"])
-    return [
-        compressed,
-        diff,
-        metrics,
-        *shuffle_and_flatten(res_original, res_compressed),
-    ] + [gr.Button(interactive=not error)] * 3
+    return (
+        [
+            compressed,
+            diff,
+            metrics,
+            *shuffle_and_flatten(res_original, res_compressed),
+        ]
+        + [gr.Button(interactive=not error)] * 4
+        + [[None, None]]
+    )
 
 
 with gr.Blocks(
@@ -251,7 +255,6 @@ with gr.Blocks(
 
     # Inputs
     tab_prompt, tab_compress = gr.Tab("Prompt target LLM", id=0), gr.Tab("Compress only", id=1)
-    compress_only = gr.State(False)
     question = gr.Textbox(
         label="Question",
         info="(will not be compressed)",
@@ -301,9 +304,11 @@ with gr.Blocks(
             response_b = gr.Textbox(label="LLM Response B", lines=10, max_lines=10, autoscroll=False, interactive=False)
             response_b_obj = gr.Textbox(label="Response B", visible=False)
         with gr.Row() as flag_buttons:
-            flag_a = gr.Button("A is better", interactive=False)
-            flag_n = gr.Button("Neither is better", interactive=False)
-            flag_b = gr.Button("B is better", interactive=False)
+            a_yes = gr.Button("✅", interactive=False)
+            a_no = gr.Button("❌", interactive=False)
+            b_yes = gr.Button("✅", interactive=False)
+            b_no = gr.Button("❌", interactive=False)
+            FLAG_BUTTONS = [a_yes, a_no, b_yes, b_no]
 
     # Examples
     gr.Markdown('<h2 style="text-align: center">Examples</div>')
@@ -321,6 +326,9 @@ with gr.Blocks(
         elem_id="examples",
     )
 
+    # States
+    compress_only, flags = gr.State(False), gr.State([None, None])
+
     # Event handlers
     for tab in [tab_prompt, tab_compress]:
         tab.select(handle_tabs, outputs=[compress_only, question, target_model, responses, flag_buttons], js="openDiff")
@@ -336,15 +344,15 @@ with gr.Blocks(
             response_a_obj,
             response_b,
             response_b_obj,
-            flag_a,
-            flag_n,
-            flag_b,
+            *FLAG_BUTTONS,
+            flags,
         ],
     )
     clear.click(
         lambda: [None] * 8
         + [50, create_metrics_df(), gr.DataFrame(visible=False)]
-        + [gr.Button(interactive=False)] * 3,
+        + [gr.Button(interactive=False)] * 4
+        + [[None, None]],
         outputs=[
             question,
             prompt,
@@ -357,9 +365,8 @@ with gr.Blocks(
             rate,
             metrics,
             qa_pairs,
-            flag_a,
-            flag_n,
-            flag_b,
+            *FLAG_BUTTONS,
+            flags,
         ],
     )
     compressed.change(lambda x: update_label(x, compressedDiff), inputs=[compressed], outputs=[compressedDiff])
@@ -380,21 +387,28 @@ with gr.Blocks(
     )
 
     # Flagging
-    def flag(prompt, context, compr_prompt, rate, metrics, res_a_obj, res_b_obj, flag_button, request: gr.Request):
-        model = re.search(r'model": "(?:[^/]*\/)?(.*?)", "object', res_a_obj)
-        print(
-            f"FLAG - model: {model.group(1) if model else ''}, flag: {flag_button[0]} - from {request.cookies['session']}"
-        )
-        args = [prompt, context, compr_prompt, rate / 100, metrics, res_a_obj, res_b_obj]
-        flagging_callback.flag(args, flag_option=flag_button[0], username=request.cookies["session"])
+    def handle_flag_selection(question, prompt, compressed, rate, metrics, res_a, res_b, flags, request: gr.Request):
+        if None in flags:
+            return
+        metrics = gr.DataFrame().postprocess(metrics).__dict__
+        model = re.search(r'model": "(?:[^/]*\/)?(.*?)", "object', res_a)
+        model = model.group(1) if model else ""
+        print(f"FLAG - model: {model}, flags: {flags} - from {request.cookies['session']}")
+        args = [question, prompt, compressed, rate / 100, metrics, res_a, res_b]
+        flagging_callback.flag(args, flag_option=json.dumps(flags), username=request.cookies["session"])
         gr.Info("Preference saved. Thank you for your feedback.")
-        return [gr.Button(interactive=False)] * 3
+
+    def flag(response: str, value: bool, fs: list[bool]):
+        fs[response == "B"] = value
+        return [gr.Button(interactive=False)] * 2 + [fs]
 
     FLAG_COMPONENTS = [question, prompt, compressed, rate, metrics, response_a_obj, response_b_obj]
     flagging_callback.setup(FLAG_COMPONENTS, FLAG_DIRECTORY)
-    flag_a.click(flag, inputs=FLAG_COMPONENTS + [flag_a], outputs=[flag_a, flag_n, flag_b], preprocess=False)
-    flag_n.click(flag, inputs=FLAG_COMPONENTS + [flag_n], outputs=[flag_a, flag_n, flag_b], preprocess=False)
-    flag_b.click(flag, inputs=FLAG_COMPONENTS + [flag_b], outputs=[flag_a, flag_n, flag_b], preprocess=False)
+    a_yes.click(lambda fs: flag("A", True, fs), inputs=[flags], outputs=FLAG_BUTTONS[:2] + [flags])
+    a_no.click(lambda fs: flag("A", False, fs), inputs=[flags], outputs=FLAG_BUTTONS[:2] + [flags])
+    b_yes.click(lambda fs: flag("B", True, fs), inputs=[flags], outputs=FLAG_BUTTONS[2:] + [flags])
+    b_no.click(lambda fs: flag("B", False, fs), inputs=[flags], outputs=FLAG_BUTTONS[2:] + [flags])
+    flags.change(handle_flag_selection, inputs=FLAG_COMPONENTS + [flags])
 
 
 app = gr.mount_gradio_app(app, demo, path="/", root_path=APP_PATH)

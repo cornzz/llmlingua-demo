@@ -118,21 +118,22 @@ def prepare_flagged_data(data: pd.DataFrame):
     if not data.empty:
         data["Response A"] = data["Response A"].apply(json.loads)
         data["Response B"] = data["Response B"].apply(json.loads)
+        data.insert(5, "Model", data["Response A"].apply(lambda x: x["model"]))
+        # Switch responses so the uncompressed one is always on the left
         data["flag"] = data.apply(
-            lambda x: (
-                x["flag"]
-                if x["flag"] == "N"
-                else "Compressed" if x[f"Response {x['flag']}"]["compressed"] else "Uncompressed"
+            lambda r: "".join(
+                [
+                    "✅" if y else "❌"
+                    for y in (json.loads(r["flag"])[::-1] if r["Response A"]["compressed"] else json.loads(r["flag"]))
+                ]
             ),
             axis=1,
         )
-        data["flag"] = data["flag"].apply(lambda x: "Neither" if x == "N" else x)
-        data.insert(5, "Model", data["Response A"].apply(lambda x: x["model"]))
         data["Response A"], data["Response B"] = zip(
             *data.apply(
                 lambda x: (
                     map(get_message, [x["Response B"], x["Response A"]])
-                    if not x["Response A"]["compressed"]
+                    if x["Response A"]["compressed"]
                     else map(get_message, [x["Response A"], x["Response B"]])
                 ),
                 axis=1,
@@ -141,8 +142,8 @@ def prepare_flagged_data(data: pd.DataFrame):
         data["Metrics"] = data["Metrics"].apply(lambda x: metrics_to_df(json.loads(x)).to_html(index=False))
     data = data.rename(
         columns={
-            "Response A": "Compressed Response",
-            "Response B": "Uncompressed Response",
+            "Response A": "Uncompressed Response",
+            "Response B": "Compressed Response",
             "username": "user",
             "timestamp": "time",
         }
