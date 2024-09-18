@@ -172,6 +172,10 @@ textarea::placeholder {
     border-bottom: none;
 }
 
+#compressed-diff.force-open .empty {
+    min-height: 250px;
+}
+
 #compressed-diff:not(.open):not(.force-open) .empty,
 #compressed-diff:not(.open):not(.force-open) .container {
     overflow: hidden;
@@ -201,6 +205,10 @@ textarea::placeholder {
     resize: vertical;
     padding: var(--input-padding);
     line-height: var(--line-sm);
+}
+
+#compressed-diff.force-open .textfield {
+    height: 250px;
 }
 
 #compressed-diff .textfield .textspan {
