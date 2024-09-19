@@ -271,7 +271,7 @@ with gr.Blocks(
         placeholder=example_dataset[1]["original_prompt"],
         elem_classes="word-count",
     )
-    rate = gr.Slider(10, 100, 50, step=1, label="Rate", info="(compressed / uncompressed)", elem_classes="rate")
+    rate = gr.Slider(10, 100, 50, step=1, label="Rate", info="(compression target)", elem_classes="rate")
     target_model = gr.Radio(label="Target LLM", choices=LLM_LIST, value=LLM_LIST[0])
     with gr.Row():
         clear = gr.Button("Clear", elem_classes="clear")
