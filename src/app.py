@@ -38,6 +38,7 @@ start_load = time.time()
 load_dotenv()
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CONSENT_POPUP = os.getenv("CONSENT_POPUP", "false")
 FLAG_DIRECTORY = os.path.join(BASE_DIR, "../flagged")
 FLAG_PASSWORD = os.getenv("FLAG_PASSWORD")
 LOG_DIRECTORY = os.path.join(FLAG_DIRECTORY, "logs")
@@ -215,7 +216,10 @@ with gr.Blocks(
     title="LLMLingua-2 Demo",
     css=os.path.join(BASE_DIR, "app.css"),
     js=os.path.join(BASE_DIR, "app.js"),
-    head='<link rel="icon" href="favicon.ico">',
+    head=f"""
+        <link rel=\"icon\" href=\"favicon.ico\">
+        <script>const CONSENT_POPUP = {CONSENT_POPUP}</script>
+    """,
     analytics_enabled=False,
     theme=gr.themes.Default(font="Source Sans 3", font_mono="IBM Plex Mono"),
 ) as demo:

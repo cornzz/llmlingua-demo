@@ -1,6 +1,6 @@
 () => {
     if (!document.cookie.includes('session=')) {
-        window.alert("By using this app, you agree that submitted data is logged (only when clicking the feedback buttons) and may be used for research purposes.\n\nPlease refrain from submitting any personal or confidential information.");
+        if (CONSENT_POPUP) window.alert("By using this app, you agree that submitted data is logged (only when clicking the feedback buttons) and may be used for research purposes.\n\nPlease refrain from submitting any personal or confidential information.");
         const date = new Date(+new Date() + 10 * 365 * 24 * 60 * 60 * 1000);
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         document.cookie = `session=${Array(32).fill().map(() => chars.charAt(Math.floor(Math.random() * chars.length))).join('')}; expires=${date.toUTCString()}; path=/`;
