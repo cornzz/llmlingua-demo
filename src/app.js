@@ -1,6 +1,6 @@
 () => {
     if (!document.cookie.includes('session=')) {
-        window.alert("By using this app, you agree that submitted data is recorded and may be used for research purposes. Please refrain from submitting any personal or confidential information.");
+        window.alert("By using this app, you agree that submitted data is logged (only when clicking the feedback buttons) and may be used for research purposes.\n\nPlease refrain from submitting any personal or confidential information.");
         const date = new Date(+new Date() + 10 * 365 * 24 * 60 * 60 * 1000);
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         document.cookie = `session=${Array(32).fill().map(() => chars.charAt(Math.floor(Math.random() * chars.length))).join('')}; expires=${date.toUTCString()}; path=/`;
@@ -16,7 +16,7 @@
     wordCountFields.forEach((t) => t.addEventListener('input', wordCountHandler));
 
     // Add listener to example prompt buttons to set wordcount on selection
-    document.querySelectorAll('.gallery, button.clear').forEach((item) => {
+    document.querySelectorAll('.gallery, button.clear')?.forEach((item) => {
         item.addEventListener('click', () => setTimeout(() => {
             wordCountFields.forEach((t) => wordCountHandler({ target: t }))
         }, 300));
@@ -24,15 +24,17 @@
 
     // Compressed diff
     const diff = document.getElementById('compressed-diff');
-    const diffLabel = diff.querySelector('label')
-    diffLabel.addEventListener('click', ({ target }) =>
-        !target.classList.contains('diff-button') && diff.classList.toggle('open')
-    );
-    const diffButton = document.createElement('button');
-    diffButton.classList.add('diff-button');
-    diffButton.addEventListener('click', () => diff.classList.toggle('show-diff'));
-    diffLabel.appendChild(diffButton);
-    window.openDiff = () => diff.classList.toggle('force-open');
+    if (diff) {
+        const diffLabel = diff.querySelector('label')
+        diffLabel.addEventListener('click', ({ target }) =>
+            !target.classList.contains('diff-button') && diff.classList.toggle('open')
+        );
+        const diffButton = document.createElement('button');
+        diffButton.classList.add('diff-button');
+        diffButton.addEventListener('click', () => diff.classList.toggle('show-diff'));
+        diffLabel.appendChild(diffButton);
+        window.openDiff = () => diff.classList.toggle('force-open');
+    }
 
     // Question click handler
     const handleQuestionClick = (event) => {
@@ -43,17 +45,20 @@
         promptInput.dispatchEvent(inputEvent);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-            mutation.addedNodes.forEach((node) => {
-                if (node.nodeName === 'TR') node.querySelector('td span').addEventListener('click', handleQuestionClick);
-            });
-            mutation.removedNodes.forEach((node) => {
-                if (node.nodeName === 'TR') node.querySelector('td span').removeEventListener('click', handleQuestionClick);
+    const qa_pairs = document.querySelector('.qa-pairs .table tbody');
+    if (qa_pairs) {
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeName === 'TR') node.querySelector('td span').addEventListener('click', handleQuestionClick);
+                });
+                mutation.removedNodes.forEach((node) => {
+                    if (node.nodeName === 'TR') node.querySelector('td span').removeEventListener('click', handleQuestionClick);
+                });
             });
         });
-    });
-    observer.observe(document.querySelector('.qa-pairs .table tbody'), { childList: true });
+        observer.observe(qa_pairs, { childList: true });
+    }
 
     // TODO: add synchronized resize for llm response textareas
 }
