@@ -226,6 +226,7 @@ with gr.Blocks(
     gr.Markdown(
         f'# Prompt Compression Demo <a class="source" href="https://github.com/cornzz/llmlingua-demo" target="_blank">{GH_LOGO}</a>'
     )
+    # Info / Settings
     with gr.Accordion("About this demo (please read):", open=False, elem_classes="accordion"):
         gr.Markdown(
             "Your prompt is sent to a target LLM for completion, both in its uncompressed form and compressed using [LLMLingua-2](https://llmlingua.com/llmlingua2.html). "

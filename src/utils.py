@@ -102,7 +102,9 @@ def create_llm_response(response: requests.Response, compressed: bool, start: fl
     obj = {
         "compressed": compressed,
         "call_time": end - start,
-        "error": error["message"]["error"] if error else False,
+        "error": (
+            (error["message"]["error"] if type(error["message"]) == dict else error["message"]) if error else False
+        ),
         "code": error["code"] if error else 200,
     }
     if not error:
