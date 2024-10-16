@@ -159,7 +159,7 @@ def compress_prompt(prompt: str, rate: float, force_tokens: list[str], force_dig
     diff = [
         (word, (None, "+")[int(label)])
         for line in result["fn_labeled_original_prompt"].split(word_sep)
-        for word, label in [line.split(label_sep)]
+        for word, label in [line.rsplit(label_sep, 1)]
     ]
     return result["compressed_prompt"], diff, create_metrics_df(result), compression_time
 
