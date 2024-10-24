@@ -97,8 +97,12 @@ def get_message(response: dict) -> str:
 
 
 def create_llm_response(response: requests.Response, compressed: bool, start: float, end: float):
-    response = response.json()
-    error = "error" in response and response["error"]
+    # TODO: improve this mess... (use openai library?)
+    if response.status_code == 200:
+        response = response.json()
+        error = "error" in response and response["error"]
+    else:
+        error = {"code": response.status_code, "message": response.text}
     obj = {
         "compressed": compressed,
         "call_time": end - start,
