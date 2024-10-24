@@ -176,10 +176,18 @@ textarea::placeholder {
     background: transparent;
 }
 
+.button-pulse {
+    animation: 5s 3s 8 pulse-scale, 5s 3s 8 pulse-shadow;
+}
+
 .button-hint {
     text-align: center;
     color: var(--block-info-text-color);
     font-size: 13px;
+}
+
+.button-hint * {
+    color: inherit;
 }
 
 /* HighlightedText component (compressed diff) */
@@ -354,4 +362,37 @@ button.diff-button:hover {
     font-style: normal;
     font-weight: 600;
     src: url('./fonts/ibm-plex-mono-v19-latin-600.woff2') format('woff2');
+}
+
+@keyframes pulse-scale {
+    0% {
+        transform: scale(1);
+    }
+
+    14% {
+        transform: scale(1.02);
+    }
+
+    20% {
+        transform: scale(1);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes pulse-shadow {
+    
+    0% {
+        box-shadow: 0 0 0 0 rgba(200, 200, 200, .3);
+    }
+
+    50% {
+        box-shadow: 0 0 0 10px rgba(200, 200, 200, .0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 15px rgba(200, 200, 200, 0);
+    }
 }

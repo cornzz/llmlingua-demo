@@ -207,7 +207,7 @@ def run_demo(
             metrics,
             *shuffle_and_flatten(res_original, res_compressed),
         ]
-        + [gr.Button(interactive=not error)] * 4
+        + [gr.Button(interactive=not error, elem_classes="button-pulse" if not error else "")] * 4
         + [[None, None]]
     )
 
@@ -334,7 +334,7 @@ with gr.Blocks(
                 b_no = gr.Button("❌", interactive=False)
                 FLAG_BUTTONS = [a_yes, a_no, b_yes, b_no]
             gr.Markdown(
-                '<div class="button-hint">✅ = answered your question / solved your problem'
+                '<div class="button-hint"><b>Please click on one of the two buttons <em>for each answer &nbsp;</em>to submit feedback.</b><br>✅ = answered your question / solved your problem'
                 "&nbsp;&nbsp;&nbsp; ❌ = did not answer your question / solve your problem.</div>"
             )
 
@@ -418,7 +418,7 @@ with gr.Blocks(
 
     def flag(response: str, value: bool, fs: list[bool]):
         fs[response == "B"] = value
-        return [gr.Button(interactive=False)] * 2 + [fs]
+        return [gr.Button(interactive=False, elem_classes="")] * 2 + [fs]
 
     FLAG_COMPONENTS = [question, prompt, compressed, rate, metrics, response_a_obj, response_b_obj]
     flagging_callback.setup(FLAG_COMPONENTS, FLAG_DIRECTORY)
