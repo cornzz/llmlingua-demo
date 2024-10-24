@@ -227,7 +227,7 @@ with gr.Blocks(
         f'# Prompt Compression Demo <a class="source" href="https://github.com/cornzz/llmlingua-demo" target="_blank">{GH_LOGO}</a>'
     )
     # Info / Settings
-    with gr.Accordion("About this demo (please read):", open=False, elem_classes="accordion"):
+    with gr.Accordion("About this demo (please read):", open=False, elem_classes="accordion about"):
         gr.Markdown(
             "Your prompt is sent to a target LLM for completion, both in its uncompressed form and compressed using [LLMLingua-2](https://llmlingua.com/llmlingua2.html). "
             "Evaluate the responses and give feedback for each one by clicking on the respective button below the answer."
@@ -260,7 +260,7 @@ with gr.Blocks(
                 )
 
     # Examples
-    with gr.Accordion("Example prompts:", open=False, elem_classes="accordion"):
+    with gr.Accordion("Example prompts:", open=False, elem_classes="accordion examples"):
         examples = gr.Dataset(
             samples=[[example["original_prompt"]] for example in example_dataset],
             components=[gr.Textbox(visible=False)],
