@@ -259,6 +259,22 @@ with gr.Blocks(
                     ["Preserve Digits"], show_label=False, container=False, value=[], elem_classes="digits-checkbox"
                 )
 
+    # Examples
+    with gr.Accordion("Example prompts:", open=False, elem_classes=["accordion", "examples"]):
+        examples = gr.Dataset(
+            samples=[[example["original_prompt"]] for example in example_dataset],
+            components=[gr.Textbox(visible=False)],
+            samples_per_page=3,
+            type="index",
+            elem_id="examples",
+        )
+        qa_pairs = gr.Dataframe(
+            label="GPT-4 generated QA pairs related to the selected example prompt:",
+            headers=["Question (click to select)", "Answer"],
+            elem_classes="qa-pairs dataframe",
+            visible=False,
+        )
+
     # Inputs
     tab_prompt, tab_compress = gr.Tab("Prompt target LLM", id=0), gr.Tab("Compress only", id=1)
     question = gr.Textbox(
@@ -320,22 +336,6 @@ with gr.Blocks(
                 '<div class="button-hint">✅ = answered your question / solved your problem'
                 "&nbsp;&nbsp;&nbsp; ❌ = did not answer your question / solve your problem.</div>"
             )
-
-    # Examples
-    gr.Markdown('<h2 style="text-align: center">Examples</div>')
-    qa_pairs = gr.Dataframe(
-        label="GPT-4 generated QA pairs related to the selected example prompt:",
-        headers=["Question (click to select)", "Answer"],
-        elem_classes="qa-pairs dataframe",
-        visible=False,
-    )
-    examples = gr.Dataset(
-        samples=[[example["original_prompt"]] for example in example_dataset],
-        components=[gr.Textbox(visible=False)],
-        samples_per_page=5,
-        type="index",
-        elem_id="examples",
-    )
 
     # States
     compress_only, flags = gr.State(False), gr.State([None, None])

@@ -50,18 +50,18 @@ textarea::placeholder {
     opacity: 0;
 }
 
-/* Accordion component (about text) */
+/* Accordion component */
 .accordion {
     background: transparent;
     padding: var(--spacing-lg) calc(var(--spacing-lg) + 2px);
 }
 
-.accordion .label-wrap span {
+.accordion .label-wrap span { /* Title */
     font-weight: bold;
     font-size: 1rem;
 }
 
-.accordion > div:last-child > div {
+.accordion > div:last-child > div { /* Content */
     gap: var(--spacing-xl);
 }
 
@@ -81,6 +81,24 @@ textarea::placeholder {
 
 .force-tokens .token {
     padding: 2px 8px;
+}
+
+/* Examples */
+#examples .label {
+    display: none;
+}
+
+#examples .gallery-item .gallery {
+    max-height: 45px;
+    white-space: unset;
+}
+
+#examples .paginate {
+    font-size: var(--text-lg);
+}
+
+.accordion.examples > div:last-child > div {
+    gap: 0;
 }
 
 /* Dataframes */
@@ -105,8 +123,20 @@ textarea::placeholder {
 }
 
 .qa-pairs .table-wrap {
-    min-height: 170px;
-    max-height: 170px;
+    min-height: 150px;
+    max-height: 150px;
+}
+
+.qa-pairs .table-wrap svelte-virtual-table-viewport table {
+    scrollbar-width: thin;
+}
+
+.qa-pairs .table-wrap .cell-wrap {
+    min-height: unset;
+}
+
+.qa-pairs .table-wrap .cell-wrap span {
+    font-size: 0.9em;
 }
 
 /* Outputs */
@@ -129,19 +159,6 @@ textarea::placeholder {
     text-align: center;
     color: var(--block-info-text-color);
     font-size: 13px;
-}
-
-/* Examples component */
-#examples .label {
-    display: none;
-}
-
-#examples .gallery-item .gallery {
-    max-height: 100px;
-}
-
-#examples .paginate {
-    font-size: var(--text-lg);
 }
 
 /* HighlightedText component (compressed diff) */
