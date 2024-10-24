@@ -29,6 +29,16 @@ textarea::placeholder {
     appearance: textfield;
 }
 
+.link-button {
+    background: transparent;
+    border: none;
+    padding: 0;
+    width: fit-content;
+    border-bottom: 1px solid;
+    border-radius: 0;
+    line-height: 1em;
+}
+
 /* Tabs */
 .tabs {
     margin-bottom: -42px;
@@ -97,10 +107,6 @@ textarea::placeholder {
     font-size: var(--text-lg);
 }
 
-.accordion.examples > div:last-child > div {
-    gap: 0;
-}
-
 /* Dataframes */
 .dataframe svelte-virtual-table-viewport table {
     scrollbar-width: none;
@@ -120,6 +126,10 @@ textarea::placeholder {
 
 .metrics .table-wrap {
     border-radius: var(--table-radius) var(--table-radius) 0 0;
+}
+
+.qa-pairs p {
+    font-size: .85rem;
 }
 
 .qa-pairs .table-wrap {

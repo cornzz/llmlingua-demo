@@ -236,7 +236,7 @@ with gr.Blocks(
             f"""
                 - **The order of the responses (prompt compressed / uncompressed) is randomized**.
                 - LLMLingua-2 is a task-agnostic compression model, the value of the question field is not considered in the compression process. Compression is performed {'on a CPU. Using a GPU would be faster.' if not (MPS_AVAILABLE or CUDA_AVAILABLE) else f'on a GPU {"using MPS." if MPS_AVAILABLE else f"({torch.cuda.get_device_name()})."}'}
-                - The example prompts were (mostly) taken from the [MeetingBank-QA-Summary](https://huggingface.co/datasets/microsoft/MeetingBank-QA-Summary) dataset. Click on a question to autofill the question field.
+                - The example prompts were taken from the [MeetingBank-QA-Summary](https://huggingface.co/datasets/microsoft/MeetingBank-QA-Summary) dataset. Click on a question to autofill the question field.
                 - Token counts are calculated using the [cl100k_base tokenizer](https://platform.openai.com/tokenizer) (GPT-3.5/-4), actual counts may vary for different target models. The saving metric is based on an API pricing of $0.03 / 1000 tokens.
                 - End-to-end latency: latency from submission to full response, including compression. While shown for reference, this metric alone is not an effective measure of compression efficacy.
             """,
@@ -260,7 +260,7 @@ with gr.Blocks(
                 )
 
     # Examples
-    with gr.Accordion("Example prompts:", open=False, elem_classes=["accordion", "examples"]):
+    with gr.Accordion("Example prompts:", open=False, elem_classes="accordion"):
         examples = gr.Dataset(
             samples=[[example["original_prompt"]] for example in example_dataset],
             components=[gr.Textbox(visible=False)],
@@ -268,9 +268,10 @@ with gr.Blocks(
             type="index",
             elem_id="examples",
         )
+        examples_back = gr.Button("← Choose different example", elem_classes="link-button", visible=False)
         qa_pairs = gr.Dataframe(
-            label="GPT-4 generated QA pairs related to the selected example prompt:",
-            headers=["Question (click to select)", "Answer"],
+            label="QA pairs related to the selected example prompt. Click on a question to autofill the question field.",
+            headers=["Question", "Answer"],
             elem_classes="qa-pairs dataframe",
             visible=False,
         )
@@ -387,6 +388,8 @@ with gr.Blocks(
         lambda idx: (
             None,
             example_dataset[idx]["original_prompt"],
+            gr.Dataset(visible=False),
+            gr.Button(visible=True),
             (
                 gr.DataFrame(example_dataset[idx]["QA_pairs"], visible=True)
                 if "QA_pairs" in example_dataset[idx]
@@ -394,7 +397,11 @@ with gr.Blocks(
             ),
         ),
         inputs=[examples],
-        outputs=[question, prompt, qa_pairs],
+        outputs=[question, prompt, examples, examples_back, qa_pairs],
+    )
+    examples_back.click(
+        lambda: (gr.Dataset(visible=True), gr.Button(visible=False), gr.DataFrame(visible=False)),
+        outputs=[examples, examples_back, qa_pairs],
     )
 
     # Flagging
