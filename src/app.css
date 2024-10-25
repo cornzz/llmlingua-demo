@@ -93,11 +93,6 @@ textarea::placeholder {
     padding: 2px 8px;
 }
 
-.accordion.about {
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-}
-
 /* Examples */
 #examples .label {
     display: none;
@@ -110,12 +105,6 @@ textarea::placeholder {
 
 #examples .paginate {
     font-size: var(--text-lg);
-}
-
-.accordion.examples {
-    margin-top: -17px;
-    border-top-left-radius: 0;
-    border-top-right-radius: 0;
 }
 
 /* Dataframes */
