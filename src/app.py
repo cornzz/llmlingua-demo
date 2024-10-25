@@ -237,7 +237,7 @@ with gr.Blocks(
                 - **The order of the responses (prompt compressed / uncompressed) is randomized**.
                 - LLMLingua-2 is a task-agnostic compression model, the value of the question field is not considered in the compression process. Compression is performed {'on a CPU. Using a GPU would be faster.' if not (MPS_AVAILABLE or CUDA_AVAILABLE) else f'on a GPU {"using MPS." if MPS_AVAILABLE else f"({torch.cuda.get_device_name()})."}'}
                 - The example prompts were taken from the [MeetingBank-QA-Summary](https://huggingface.co/datasets/microsoft/MeetingBank-QA-Summary) dataset. Click on a question to autofill the question field.
-                - Token counts are calculated using the [cl100k_base tokenizer](https://platform.openai.com/tokenizer) (GPT-3.5/-4), actual counts may vary for different target models. The saving metric is based on an API pricing of $0.03 / 1000 tokens.
+                - Token counts are calculated using the [GPT-3.5/-4 tokenizer](https://platform.openai.com/tokenizer), actual counts may vary for different target models. The saving metric is based on an API pricing of $0.03 / 1000 tokens.
                 - End-to-end latency: latency from submission to full response, including compression. While shown for reference, this metric alone is not an effective measure of compression efficacy.
             """,
             elem_id="notes",
@@ -322,28 +322,30 @@ with gr.Blocks(
         )
         compressed = gr.Textbox(label="Compressed Prompt", visible=False)
         with gr.Row(elem_classes="responses") as responses:
-            response_a = gr.Textbox(label="LLM Response A", lines=10, max_lines=10, autoscroll=False, interactive=False)
-            response_a_obj = gr.Textbox(label="Response A", visible=False)
-            response_b = gr.Textbox(label="LLM Response B", lines=10, max_lines=10, autoscroll=False, interactive=False)
-            response_b_obj = gr.Textbox(label="Response B", visible=False)
-        with gr.Column() as flag_buttons:
-            with gr.Row():
-                a_yes = gr.Button("✅", interactive=False)
-                a_no = gr.Button("❌", interactive=False)
-                b_yes = gr.Button("✅", interactive=False)
-                b_no = gr.Button("❌", interactive=False)
-                FLAG_BUTTONS = [a_yes, a_no, b_yes, b_no]
-            gr.Markdown(
-                '<div class="button-hint"><b>Please click on one of the two buttons <em>for each answer &nbsp;</em>to submit feedback.</b><br>✅ = answered your question / solved your problem'
-                "&nbsp;&nbsp;&nbsp; ❌ = did not answer your question / solve your problem.</div>"
-            )
+            with gr.Column(elem_classes="responses"):
+                response_a = gr.Textbox(label="LLM Response A", lines=10, max_lines=10, autoscroll=False, interactive=False)
+                response_a_obj = gr.Textbox(label="Response A", visible=False)
+                with gr.Row():
+                    a_yes = gr.Button("✅", interactive=False)
+                    a_no = gr.Button("❌", interactive=False)
+            with gr.Column(elem_classes="responses"):
+                response_b = gr.Textbox(label="LLM Response B", lines=10, max_lines=10, autoscroll=False, interactive=False)
+                response_b_obj = gr.Textbox(label="Response B", visible=False)
+                with gr.Row():
+                    b_yes = gr.Button("✅", interactive=False)
+                    b_no = gr.Button("❌", interactive=False)
+            FLAG_BUTTONS = [a_yes, a_no, b_yes, b_no]
+        gr.Markdown(
+            '<div class="button-hint"><b>Please click on one of the two buttons <em>for each answer &nbsp;</em>to submit feedback.</b><br>✅ = answered your question / solved your problem'
+            "&nbsp;&nbsp;&nbsp; ❌ = did not answer your question / solve your problem.</div>"
+        )
 
     # States
     compress_only, flags = gr.State(False), gr.State([None, None])
 
     # Event handlers
     for tab in [tab_prompt, tab_compress]:
-        tab.select(handle_tabs, outputs=[compress_only, question, target_model, responses, flag_buttons], js="openDiff")
+        tab.select(handle_tabs, outputs=[compress_only, question, target_model, responses], js="openDiff")
     prompt.change(activate_button, inputs=[prompt], outputs=[submit])
     submit.click(
         run_demo,

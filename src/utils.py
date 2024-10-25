@@ -71,7 +71,6 @@ def handle_tabs(event: gr.SelectData) -> tuple[bool, gr.Textbox, gr.Radio, gr.Ro
         gr.Textbox(visible=not compress_only),
         gr.Radio(visible=not compress_only),
         gr.Row(visible=not compress_only),
-        gr.Row(visible=not compress_only),
     )
 
 
