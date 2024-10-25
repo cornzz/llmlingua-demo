@@ -296,11 +296,11 @@ with gr.Blocks(
     rate = gr.Slider(10, 100, 50, step=1, label="Rate", info="(compression target)", elem_classes="rate")
     target_model = gr.Radio(label="Target LLM", choices=LLM_LIST, value=LLM_LIST[0])
     with gr.Row():
-        clear = gr.Button("Clear", elem_classes="clear")
-        submit = gr.Button("Submit", variant="primary", interactive=False)
+        clear = gr.Button("Clear", elem_id="clear")
+        submit = gr.Button("Submit", variant="primary", elem_id="submit", interactive=False)
 
     # Outputs
-    with gr.Column(variant="panel", elem_classes="outputs"):
+    with gr.Column(variant="panel", elem_id="outputs"):
         gr.Markdown('<h2 style="text-align: center">Results</h2>')
         metrics = gr.Dataframe(
             label="Metrics",
@@ -369,7 +369,7 @@ with gr.Blocks(
     clear.click(
         lambda: [None] * 8
         + [50, create_metrics_df(), gr.Dataset(visible=True), gr.Button(visible=False), gr.DataFrame(visible=False)]
-        + [gr.Button(interactive=False)] * 4
+        + [gr.Button(elem_classes="", interactive=False)] * 4
         + [[None, None]],
         outputs=[
             question,

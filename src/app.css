@@ -150,10 +150,6 @@ textarea::placeholder {
 }
 
 /* Outputs */
-.outputs {
-    border-color: var(--border-color-primary);
-}
-
 .responses > div {
     background: transparent;
     border: none;
@@ -166,7 +162,7 @@ textarea::placeholder {
 }
 
 .button-pulse {
-    animation: 4s 3s 8 pulse-scale, 4s 3s 8 pulse-shadow;
+    animation: 4s 0.5s 8 pulse-scale, 4s 0.5s 8 pulse-shadow;
 }
 
 .button-hint {

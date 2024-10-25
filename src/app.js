@@ -16,7 +16,7 @@
     wordCountFields.forEach((t) => t.addEventListener('input', wordCountHandler));
 
     // Add listener to example prompt buttons to set wordcount on selection
-    document.querySelectorAll('.gallery, button.clear')?.forEach((item) => {
+    document.querySelectorAll('.gallery, #clear')?.forEach((item) => {
         item.addEventListener('click', () => setTimeout(() => {
             wordCountFields.forEach((t) => wordCountHandler({ target: t }))
         }, 300));
@@ -59,6 +59,13 @@
         });
         observer.observe(qa_pairs, { childList: true });
     }
+
+    // Scroll to results on submit, scroll to top on clear
+    document.getElementById('submit').addEventListener('click', () => {
+        const results = document.getElementById('outputs');
+        window.scrollTo({ top: results.offsetTop, behavior: 'smooth' });
+    })
+    document.getElementById('clear').addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
     // TODO: add synchronized resize for llm response textareas
 }
