@@ -323,13 +323,17 @@ with gr.Blocks(
         compressed = gr.Textbox(label="Compressed Prompt", visible=False)
         with gr.Row(elem_classes="responses") as responses:
             with gr.Column(elem_classes="responses"):
-                response_a = gr.Textbox(label="LLM Response A", lines=10, max_lines=10, autoscroll=False, interactive=False)
+                response_a = gr.Textbox(
+                    label="LLM Response A", lines=10, max_lines=10, autoscroll=False, interactive=False
+                )
                 response_a_obj = gr.Textbox(label="Response A", visible=False)
                 with gr.Row():
                     a_yes = gr.Button("✅", interactive=False)
                     a_no = gr.Button("❌", interactive=False)
             with gr.Column(elem_classes="responses"):
-                response_b = gr.Textbox(label="LLM Response B", lines=10, max_lines=10, autoscroll=False, interactive=False)
+                response_b = gr.Textbox(
+                    label="LLM Response B", lines=10, max_lines=10, autoscroll=False, interactive=False
+                )
                 response_b_obj = gr.Textbox(label="Response B", visible=False)
                 with gr.Row():
                     b_yes = gr.Button("✅", interactive=False)
@@ -364,7 +368,7 @@ with gr.Blocks(
     )
     clear.click(
         lambda: [None] * 8
-        + [50, create_metrics_df(), gr.DataFrame(visible=False)]
+        + [50, create_metrics_df(), gr.Dataset(visible=True), gr.Button(visible=False), gr.DataFrame(visible=False)]
         + [gr.Button(interactive=False)] * 4
         + [[None, None]],
         outputs=[
@@ -378,6 +382,8 @@ with gr.Blocks(
             response_b,
             rate,
             metrics,
+            examples,
+            examples_back,
             qa_pairs,
             *FLAG_BUTTONS,
             flags,
