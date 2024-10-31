@@ -234,7 +234,7 @@ with gr.Blocks(
         )
         gr.Markdown(
             f"""
-                - **The order of the responses (prompt compressed / uncompressed) is randomized**.
+                - **The order of the responses (prompt compressed / uncompressed) is randomized** and will be revealed after feedback submission.
                 - LLMLingua-2 is a task-agnostic compression model, the value of the question field is not considered in the compression process. Compression is performed {'on a CPU. Using a GPU would be faster.' if not (MPS_AVAILABLE or CUDA_AVAILABLE) else f'on a GPU {"using MPS." if MPS_AVAILABLE else f"({torch.cuda.get_device_name()})."}'}
                 - The example prompts were taken from the [MeetingBank-QA-Summary](https://huggingface.co/datasets/microsoft/MeetingBank-QA-Summary) dataset. Click on a question to autofill the question field.
                 - Token counts are calculated using the [GPT-3.5/-4 tokenizer](https://platform.openai.com/tokenizer), actual counts may vary for different target models. The saving metric is based on an API pricing of $0.03 / 1000 tokens.
@@ -340,8 +340,8 @@ with gr.Blocks(
                     b_no = gr.Button("❌", interactive=False)
             FLAG_BUTTONS = [a_yes, a_no, b_yes, b_no]
         gr.Markdown(
-            '<div class="button-hint"><b>Please click on one of the two buttons <em>for each answer &nbsp;</em>to submit feedback.</b><br>✅ = answered your question / solved your problem'
-            "&nbsp;&nbsp;&nbsp; ❌ = did not answer your question / solve your problem.</div>"
+            '<div class="button-hint"><b>Please click on one of the two buttons <em>for each answer &nbsp;</em>to submit feedback.</b><br>'
+            "✅ = answered your question / solved your problem&nbsp;&nbsp;&nbsp; ❌ = did not answer your question / solve your problem.</div>"
         )
 
     # States
@@ -367,8 +367,9 @@ with gr.Blocks(
         ],
     )
     clear.click(
-        lambda: [None] * 8
-        + [50, create_metrics_df(), gr.Dataset(visible=True), gr.Button(visible=False), gr.DataFrame(visible=False)]
+        lambda: [None] * 6
+        + [gr.Textbox(label="LLM Response A", value=None), gr.Textbox(label="LLM Response B", value=None)]
+        + [create_metrics_df(), gr.Dataset(visible=True), gr.Button(visible=False), gr.DataFrame(visible=False)]
         + [gr.Button(elem_classes="", interactive=False)] * 4
         + [[None, None]],
         outputs=[
@@ -377,10 +378,9 @@ with gr.Blocks(
             compressed,
             compressedDiff,
             response_a_obj,
-            response_a,
             response_b_obj,
+            response_a,
             response_b,
-            rate,
             metrics,
             examples,
             examples_back,
@@ -393,18 +393,18 @@ with gr.Blocks(
     response_a.change(lambda x: update_label(x, response_a), inputs=[response_a], outputs=[response_a])
     response_b.change(lambda x: update_label(x, response_b), inputs=[response_b], outputs=[response_b])
     examples.select(
-        lambda idx: (
+        lambda idx, compress_only: (
             None,
             example_dataset[idx]["original_prompt"],
-            gr.Dataset(visible=False),
-            gr.Button(visible=True),
+            gr.Dataset(visible=compress_only),
+            gr.Button(visible=not compress_only),
             (
                 gr.DataFrame(example_dataset[idx]["QA_pairs"], visible=True)
                 if "QA_pairs" in example_dataset[idx]
                 else gr.DataFrame(visible=False)
             ),
         ),
-        inputs=[examples],
+        inputs=[examples, compress_only],
         outputs=[question, prompt, examples, examples_back, qa_pairs],
     )
     examples_back.click(
@@ -415,7 +415,7 @@ with gr.Blocks(
     # Flagging
     def handle_flag_selection(question, prompt, compressed, rate, metrics, res_a, res_b, flags, request: gr.Request):
         if None in flags:
-            return
+            return gr.Textbox(), gr.Textbox()
         metrics = gr.DataFrame().postprocess(metrics).__dict__
         model = re.search(r'model": "(?:[^/]*\/)?(.*?)", "object', res_a)
         model = model.group(1) if model else ""
@@ -423,6 +423,10 @@ with gr.Blocks(
         args = [question, prompt, compressed, rate / 100, metrics, res_a, res_b]
         flagging_callback.flag(args, flag_option=json.dumps(flags), username=request.cookies["session"])
         gr.Info("Preference saved. Thank you for your feedback.")
+        get_label = lambda res: "LLM Response " + (
+            "(compressed prompt)" if '"compressed": true' in res else "(original prompt)"
+        )
+        return gr.Textbox(label=get_label(res_a)), gr.Textbox(label=get_label(res_b))
 
     def flag(response: str, value: bool, fs: list[bool]):
         fs[response == "B"] = value
@@ -434,7 +438,7 @@ with gr.Blocks(
     a_no.click(lambda fs: flag("A", False, fs), inputs=[flags], outputs=FLAG_BUTTONS[:2] + [flags])
     b_yes.click(lambda fs: flag("B", True, fs), inputs=[flags], outputs=FLAG_BUTTONS[2:] + [flags])
     b_no.click(lambda fs: flag("B", False, fs), inputs=[flags], outputs=FLAG_BUTTONS[2:] + [flags])
-    flags.change(handle_flag_selection, inputs=FLAG_COMPONENTS + [flags])
+    flags.change(handle_flag_selection, inputs=FLAG_COMPONENTS + [flags], outputs=[response_a, response_b])
 
 
 app = gr.mount_gradio_app(app, demo, path="/", root_path=APP_PATH)
