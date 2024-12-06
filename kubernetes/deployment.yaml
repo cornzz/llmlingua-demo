@@ -37,7 +37,7 @@ spec:
             - name: CONSENT_POPUP
               value: "true"
             - name: LLM_LIST
-              value: meta-llama/Meta-Llama-3.1-70B-Instruct, CohereForAI/c4ai-command-r-plus
+              value: meta-llama/Meta-Llama-3.1-70B-Instruct, CohereForAI/c4ai-command-r-08-2024
             # - name: HF_HUB_CACHE
             #   value: /demo/cache/huggingface
             # - name: TIKTOKEN_CACHE_DIR
