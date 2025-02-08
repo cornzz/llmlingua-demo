@@ -34,10 +34,12 @@ spec:
           env:
             - name: APP_PATH
               value: /compress
+            - name: SURVEY_MODE
+              value: "true"
             - name: CONSENT_POPUP
               value: "true"
             - name: LLM_LIST
-              value: meta-llama/Meta-Llama-3.1-70B-Instruct, CohereForAI/c4ai-command-r-08-2024
+              value: meta-llama/Llama-3.3-70B-Instruct, CohereForAI/c4ai-command-r-08-2024, Qwen/Qwen2-VL-7B-Instruct
             # - name: HF_HUB_CACHE
             #   value: /demo/cache/huggingface
             # - name: TIKTOKEN_CACHE_DIR
