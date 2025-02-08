@@ -10,10 +10,12 @@ pip install -r requirements.txt
 ```
 - Create a `.env` file, e.g.:
 ```
-LLM_ENDPOINT=https://api.openai.com/v1  # Optional. If not provided, only compression will be possible
+LLM_ENDPOINT=https://api.openai.com/v1  # Optional. If not provided, only compression will be possible.
 LLM_TOKEN=token_1234
-LLM_LIST=gpt-4o-mini, gpt-3.5-turbo     # Optional. If not provided, a list of models will be fetched from the API
-FLAG_PASSWORD=very_secret               # Optional. If not provided, /flagged and /logs endpoints are disabled
+LLM_LIST=gpt-4o-mini, gpt-3.5-turbo     # Optional. If not provided, a list of models will be fetched from the API.
+SURVEY_MODE=false                       # Optional. If set to 1, survey mode is enabled, i.e. answers are returned in random order and feedback can be submitted by the user.
+FLAG_PASSWORD=very_secret               # Optional. If not provided, /flagged and /logs endpoints are disabled.
+APP_PATH=/                              # Optional. Sets the root path of the application, for example if the application is behind a reverse proxy.
 ```
 
 ## Running

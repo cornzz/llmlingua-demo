@@ -80,9 +80,10 @@ def update_label(content: str, component: gr.Textbox | gr.HighlightedText) -> gr
     return gr.Textbox(label=new_label) if isinstance(component, gr.Textbox) else gr.HighlightedText(label=new_label)
 
 
-def shuffle_and_flatten(original: dict[str, object], compressed: dict[str, object]):
-    responses = [original, compressed]
-    shuffle(responses)
+def shuffle_and_flatten(compressed: dict[str, object], original: dict[str, object], survey_mode: bool) -> iter:
+    responses = [compressed, original]
+    if survey_mode:
+        shuffle(responses)
     return (x for xs in responses for x in xs.values())
 
 
